@@ -1,0 +1,13 @@
+{
+  "apps": [
+    {
+      "name": "org.smm.play",
+      "env": {
+        "PORT": "4000"
+      },
+      "script": "/opt/node-apps/org.smm.play/server.js",
+      "exec_mode": "cluster_mode",
+      "instances": "1"
+    }
+  ]
+}

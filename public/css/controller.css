@@ -1,0 +1,46 @@
+@import url('https://fonts.googleapis.com/css?family=Poppins');
+
+*{
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+
+    color: #eee;
+    text-align: center;
+
+    /* Disable text highlighting */
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    -khtml-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+
+    /* Lock screen position */
+    height: 100%;
+    width: 100%;
+    overflow: hidden;
+    position: fixed;
+    background-color: #111;
+
+}
+
+h3 {
+    z-index: 3;
+    font-size: 14px;
+    font-family: 'Poppins', monospace;
+    /*letter-spacing: 0.75px;*/
+    padding: 10px;
+    background: black;
+
+}
+
+canvas {
+    position: fixed;
+    top: 0px;
+    left: 0px;
+    z-index: 1;
+}

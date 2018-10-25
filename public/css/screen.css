@@ -1,0 +1,82 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    color:#efefef;
+    font: 13px Helvetica, Arial;
+    background: #000;
+    overflow: hidden;
+}
+
+#stage {
+    position: absolute;
+    top: 0;
+    left: 0;
+    overflow: hidden;
+}
+
+#messages {
+    list-style-type: none;
+    margin: 0;
+    padding: 0;
+}
+
+#messages li {
+    padding: 5px 10px;
+}
+
+#game-countdown {
+    position: absolute;
+    text-align: center;
+    right: 100px;
+    top: 20px;
+    width: 150px;
+    font-size: 11em;
+    padding: 5px 5px 70px 5px;
+    z-index: 0;
+}
+#game-countdown.show {
+    background: black;
+    z-index: 9;
+}
+
+#join-msg{
+    position: fixed;
+    text-align: center;
+/*    left: 270px;
+    bottom: 90px;*/
+    left: 0px;
+    top: 0px;
+    font-size: 2.5em;
+    color: #ddd;
+}
+
+#new-round {
+    text-align: center;
+    position: absolute;
+    top: 0px;
+    height: 100%;
+    width: 100%;
+    z-index: 5;
+}
+
+#new-round #round-countdown {
+    position: absolute;
+    text-align: center;
+    right: 330px;
+    width: 300px;
+    top: 582px;
+    font-size: 11em;
+    color: #fff;
+}
+
+#new-round #player-list {
+    position: absolute;
+    text-align: left;
+    left: 60px;
+    top: 525px;
+    font-size: 25px;
+}
