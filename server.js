@@ -14,7 +14,12 @@ const profanity = require('profanity-util');
 const CLIENT_CONTROLLER = 'client_controller';
 const CLIENT_SHARED_SCREEN = 'client_shared_screen';
 const DEVICE_STORAGE_KEY = 'smm_player_profile';
+
+// Holds reference to all
+// connected clients using
+// their socket-id as keys.
 const clients = {};
+
 let sharedScreenSID;
 let sharedScreenConnected = false;
 
@@ -27,24 +32,22 @@ if (process.env.PORT) {
   console.log('SETTING PORT BASED ON ENV VAR');
 }
 
-if (process.argv.indexOf('--port') != -1) {
+if (process.argv.indexOf('--port') !== -1) {
   portNumber = process.argv[process.argv.indexOf('--port') + 1];
 }
 
 app.set('port', portNumber);
 app.use('/', express.static(path.join(__dirname, 'public')));
 
-// This allows ability sniff IP addresses (https://goo.gl/rHLCgE)
+// Uncomment to allow sniffing IP addresses (https://goo.gl/rHLCgE)
 // app.enable('trust proxy');
 
 // Serve client files
 app.get('/', (request, response) => {
   const userAgent = request.headers['user-agent'];
-  const ua = uaParser.parseUA(userAgent).toString();// -> "Safari 5.0.1"
+  const ua = uaParser.parseUA(userAgent).toString();// -> e.g. "Safari 5.0.1"
   const os = uaParser.parseOS(userAgent).toString();// -> "iOS 5.1"
   const device = uaParser.parseDevice(userAgent).toString();// -> "iPhone"
-
-  // TODO: Serve warning to any user on unsupported OS, browser, or device.
 
   console.log('Serving controller.html to: ', device, ' running ', ua, ' on ', os);
   console.log('Controller IP:', request.ip, request.ips);
@@ -60,12 +63,8 @@ app.get('/screen', (request, response) => {
   }
 
   response.sendFile(`${__dirname}/screen.html`);
-
-  const userAgent = request.headers['user-agent'];
-  const ua = uaParser.parseUA(userAgent).toString();// -> "Safari 5.0.1"
-  const os = uaParser.parseOS(userAgent).toString();// -> "iOS 5.1"
-  const device = uaParser.parseDevice(userAgent).toString();// -> "iPhone"
 });
+
 
 // Socket.io connections
 io.on('connection', (socket) => {
@@ -76,19 +75,75 @@ io.on('connection', (socket) => {
   let nickname;
   let usercolor;
 
-  // console.log('User has connected. Connection:', socket.request.connection._peername);
+  function logStats() {
+    console.log('[STATS] client count:', Object.keys(clients).length, '| shared screen status:', sharedScreenConnected, sharedScreenSID);
+  }
+
+  function newUserData() {
+    const dataObj = {
+      userid,
+      nickname,
+      usercolor,
+    };
+
+    return JSON.stringify(dataObj);
+  }
+
+  function forceDisconnectUser(data) {
+    console.log('forceDisconnectUser()', data);
+
+    // Do nothing if shared big screen isn't connected
+    if (!sharedScreenSID) return;
+
+    // Tell the game to remove the player
+    // using the userid to target the right game object.
+    io.sockets.connected[sharedScreenSID].emit('remove-player', {
+      nickname: 'idlePlayer',
+      userid: data.userid,
+    });
+
+    // Before disconnecting this user,
+    // display alert on their phone.
+    const disconnectSocket = io.sockets.connected[data.socketid];
+    if (disconnectSocket) {
+      disconnectSocket.emit('alert-message', { message: data.disconnectMessage });
+    } else {
+      console.log('Blocked attempt to send force-disconnect to non-existing socket:', data);
+    }
+
+    // Disconnect and cease
+    // tracking this socket
+    if (clients[data.userid]) {
+      clients[data.userid].disconnect();
+      delete clients[data.userid];
+    }
+
+    logStats();
+  }
+
+  function purifyName(nameStr) {
+    let nameStringOut = nameStr;
+
+    // Check that string is not empty or full of spaces
+    if (/\S/.test(nameStringOut) && nameStringOut !== undefined) {
+      [nameStringOut] = profanity.purify(nameStr, { replace: 'true', replacementsList: ['PottyMouth', 'Gutter', 'DullMind', 'Gross'] });
+    } else {
+      nameStringOut = `Hero_${Math.round(Math.random() * 999)}`;
+    }
+
+    return nameStringOut;
+  }
 
   // User registered
   socket.on('register', (data) => {
     console.log('[REGISTER]', data.nickname, data.usertype, data.userid);
 
     socketid = socket.id;
-    usertype = data.usertype;
+    ({ usertype, usercolor } = data);
     nickname = purifyName(data.nickname);
-    usercolor = data.usercolor;
 
-    if (usertype == CLIENT_SHARED_SCREEN) {
-      if (sharedScreenConnected == true) {
+    if (usertype === CLIENT_SHARED_SCREEN) {
+      if (sharedScreenConnected === true) {
         console.log('Warning! Shared screen was already connected. Another browser is taking over game. Is this intentional? Disconnecting current connected screen.');
 
         const screenSocket = io.sockets.connected[sharedScreenSID];
@@ -110,7 +165,7 @@ io.on('connection', (socket) => {
         sharedScreenSID = socket.id;
         sharedScreenConnected = true;
       }
-    } else if (usertype == CLIENT_CONTROLLER && sharedScreenConnected) {
+    } else if (usertype === CLIENT_CONTROLLER && sharedScreenConnected) {
       /**
        * If returning user, use
        * existing userid found on
@@ -120,7 +175,7 @@ io.on('connection', (socket) => {
        */
       if (data.firstTime === false) {
         // Returning user
-        userid = data.userid;
+        ({ userid } = data);
         /**
          * Ensure no other clients
          * have the same userid. If
@@ -166,8 +221,8 @@ io.on('connection', (socket) => {
   socket.on('disconnect', (reason) => {
     console.log('[DISCONNECT] event recieved:', reason, usertype, nickname, userid);
 
-    if (usertype == CLIENT_CONTROLLER && sharedScreenConnected) {
-      if (reason == 'ping timeout') {
+    if (usertype === CLIENT_CONTROLLER && sharedScreenConnected) {
+      if (reason === 'ping timeout') {
         console.log('What just a second. That dang ping timeout. Should attempt reconnect?');
       } else {
         io.sockets.connected[sharedScreenSID].emit('remove-player', {
@@ -175,8 +230,8 @@ io.on('connection', (socket) => {
           userid,
         });
       }
-    } else if (usertype == CLIENT_SHARED_SCREEN) {
-      if (sharedScreenSID == socketid) {
+    } else if (usertype === CLIENT_SHARED_SCREEN) {
+      if (sharedScreenSID === socketid) {
         console.log('Disconnecting screen matches active screen. Expected.');
 
         sharedScreenConnected = false;
@@ -204,8 +259,9 @@ io.on('connection', (socket) => {
   // Force specific client to disconnect
   socket.on('force-disconnect', (data) => {
     console.log('[FORCE-DISCONNECT]', data);
-    data.disconnectMessage = 'Disconnected due to inactivity. Reload play.smm.org to join again.';
-    forceDisconnectUser(data);
+    const newData = data;
+    newData.disconnectMessage = 'Disconnected due to inactivity. Reload play.smm.org to join again.';
+    forceDisconnectUser(newData);
   });
 
   // Force specific client to disconnect
@@ -223,15 +279,17 @@ io.on('connection', (socket) => {
   // Controller vector update
   socket.on('control-vector', (data) => {
     if (!sharedScreenConnected) return;
-    data.userid = userid;
-    io.sockets.connected[sharedScreenSID].emit('control-vector', data);
+    const newData = data;
+    newData.userid = userid;
+    io.sockets.connected[sharedScreenSID].emit('control-vector', newData);
   });
 
   // Controller tap
   socket.on('control-tap', (data) => {
     if (!sharedScreenConnected) return;
-    data.userid = userid;
-    io.sockets.connected[sharedScreenSID].emit('control-tap', data);
+    const newData = data;
+    newData.userid = userid;
+    io.sockets.connected[sharedScreenSID].emit('control-tap', newData);
   });
 
   // Forward events to specific controllers
@@ -244,63 +302,6 @@ io.on('connection', (socket) => {
       console.log(data);
     }
   });
-
-  function forceDisconnectUser(data) {
-    console.log('forceDisconnectUser()', data);
-
-    // Do nothing if shared big screen isn't connected
-    if (!sharedScreenSID) return;
-
-    // Tell the game to remove the player
-    // using the userid to target the right game object.
-    io.sockets.connected[sharedScreenSID].emit('remove-player', {
-      nickname: 'idlePlayer',
-      userid: data.userid,
-    });
-
-    // Before disconnecting this user,
-    // display alert on their phone.
-    const disconnectSocket = io.sockets.connected[data.socketid];
-    if (disconnectSocket) {
-      disconnectSocket.emit('alert-message', { message: data.disconnectMessage });
-    } else {
-      console.log('Blocked attempt to send force-disconnect to non-existing socket:', data);
-    }
-
-    // Disconnect and cease
-    // tracking this socket
-    if (clients[data.userid]) {
-      clients[data.userid].disconnect();
-      delete clients[data.userid];
-    }
-
-    logStats();
-  }
-
-  function logStats() {
-    console.log('[STATS] client count:', Object.keys(clients).length, '| shared screen status:', sharedScreenConnected, sharedScreenSID);
-  }
-
-  function purifyName(nameStr) {
-    // Check that string is not empty or full of spaces
-    if (/\S/.test(nameStr) && nameStr !== undefined) {
-      nameStr = profanity.purify(nameStr, { replace: 'true', replacementsList: ['PottyMouth', 'GutterMind', 'Turdington', 'DullMind', 'Blue'] })[0];
-    } else {
-      nameStr = `Hero_${Math.round(Math.random() * 999)}`;
-    }
-
-    return nameStr;
-  }
-
-  function newUserData() {
-    const dataObj = {
-      userid,
-      nickname,
-      usercolor,
-    };
-
-    return JSON.stringify(dataObj);
-  }
 });
 
 // Listen for http requests on port <portNumber>
@@ -308,7 +309,7 @@ http.listen(portNumber, () => {
   console.log(`Listening to Node server on port ${portNumber}...`);
 });
 
-// Set socket io settings
-console.log('+++++ SOCKET.IO ++++');
+// Print socket io settings
+console.log('SOCKET.IO SETTINGS');
 console.log('pingTimeout:', io.engine.pingTimeout);
 console.log('pingInterval:', io.engine.pingInterval);
