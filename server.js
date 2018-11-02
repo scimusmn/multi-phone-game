@@ -1,9 +1,17 @@
+/* eslint no-console: 0 */
+/* eslint max-len: ["error", { "code": 100 }] */
+
 // Imports
 const express = require('express');
 
 const app = express();
 const http = require('http').Server(app);
-const io = require('socket.io')(http, { path: '/socket.io', pingInterval: 900000, pingTimeout: 2400000 });
+const io = require('socket.io')(http,
+  {
+    path: '/socket.io',
+    pingInterval: 900000,
+    pingTimeout: 2400000,
+  });
 const path = require('path');
 const uaParser = require('ua-parser');
 const Puid = require('puid');
@@ -23,10 +31,10 @@ const clients = {};
 let sharedScreenSID;
 let sharedScreenConnected = false;
 
-// Search for '-port' flag
-// default to port 3000.
+// Default to port 3000.
 let portNumber = 3000;
 
+// Search for '-port' flag
 if (process.env.PORT) {
   portNumber = process.env.PORT;
   console.log('SETTING PORT BASED ON ENV VAR');
@@ -76,7 +84,10 @@ io.on('connection', (socket) => {
   let usercolor;
 
   function logStats() {
-    console.log('[STATS] client count:', Object.keys(clients).length, '| shared screen status:', sharedScreenConnected, sharedScreenSID);
+    console.log('[STATS] client count:',
+      Object.keys(clients).length,
+      '| shared screen status:',
+      sharedScreenConnected, sharedScreenSID);
   }
 
   function newUserData() {
@@ -126,7 +137,10 @@ io.on('connection', (socket) => {
 
     // Check that string is not empty or full of spaces
     if (/\S/.test(nameStringOut) && nameStringOut !== undefined) {
-      [nameStringOut] = profanity.purify(nameStr, { replace: 'true', replacementsList: ['PottyMouth', 'Gutter', 'DullMind', 'Gross'] });
+      [nameStringOut] = profanity.purify(nameStr, {
+        replace: 'true',
+        replacementsList: ['PottyMouth', 'Gutter', 'DullMind', 'Gross'],
+      });
     } else {
       nameStringOut = `Hero_${Math.round(Math.random() * 999)}`;
     }
@@ -144,7 +158,7 @@ io.on('connection', (socket) => {
 
     if (usertype === CLIENT_SHARED_SCREEN) {
       if (sharedScreenConnected === true) {
-        console.log('Warning! Shared screen was already connected. Another browser is taking over game. Is this intentional? Disconnecting current connected screen.');
+        console.log('Warning! Shared screen was already connected.');
 
         const screenSocket = io.sockets.connected[sharedScreenSID];
 
@@ -189,7 +203,9 @@ io.on('connection', (socket) => {
         if (prevConnected && prevConnected !== socket.id) {
           // TODO: Display "Disconnected" message on previous tab.
           console.log(`Disconnecting redundant user socket: ${clients[userid]}`);
-          prevConnected.emit('alert-message', { message: 'Whoops you disconnected! Reload to play.' });
+          prevConnected.emit('alert-message', {
+            message: 'Whoops you disconnected! Reload to play.',
+          });
           clients[userid].disconnect();
           delete clients[userid];
         }
@@ -242,7 +258,7 @@ io.on('connection', (socket) => {
         sharedScreenConnected = false;
         sharedScreenSID = null;
 
-        console.log('Warning! Socket ID is mismatched on disconnect. Ensure only one screen is being served!');
+        console.log('Warning! Ensure only one screen is being served!');
       }
     }
 
@@ -260,7 +276,8 @@ io.on('connection', (socket) => {
   socket.on('force-disconnect', (data) => {
     console.log('[FORCE-DISCONNECT]', data);
     const newData = data;
-    newData.disconnectMessage = 'Disconnected due to inactivity. Reload play.smm.org to join again.';
+    const msg = 'Disconnected due to inactivity. Reload play.smm.org to join again.';
+    newData.disconnectMessage = msg;
     forceDisconnectUser(newData);
   });
 
@@ -272,7 +289,7 @@ io.on('connection', (socket) => {
     const freshData = {};
     freshData.socketid = socketid;
     freshData.userid = userid;
-    freshData.disconnectMessage = 'Whoops, looks like you left the browser. Reload play.smm.org to join again.';
+    freshData.disconnectMessage = 'You left the browser! Reload play.smm.org to join again.';
     forceDisconnectUser(freshData);
   });
 
