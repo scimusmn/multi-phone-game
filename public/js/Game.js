@@ -1,5 +1,8 @@
+/* eslint no-console: 0 */
+/* eslint max-len: ["error", { "code": 100 }] */
+/* eslint no-undef: 0 */
 
-function Game() {
+function Game(_mapLoader) {
   const ROUND_DURATION = 40; // 75
   const LOBBY_DURATION = 10; // 35
 
@@ -29,12 +32,14 @@ function Game() {
 
   const debugMode = false;
   const debugFlyerData = {
-    userid: 'debug-user-id12345', usercolor: '#FD6E83', nickname: 'Debug', socketid: 'debug-socket-id-abc',
+    userid: 'debug-user-id12345',
+    usercolor: '#FD6E83',
+    nickname: 'Debug',
+    socketid: 'debug-socket-id-abc',
   };
   let cursors;
   let brickPlatforms;
   let allFlyersGroup;
-  let winnerFlyer;
   let winnerCrown;
 
   let brickEmitter;
@@ -184,9 +189,7 @@ function Game() {
       brickPlatforms = game.add.group();
     }
 
-    const brickRects = FishRandomBrickLevel(); // Available from ./BrickTileMap.js
-
-    let platform;
+    const brickRects = _mapLoader.getRandomBrickMap(); // Available from ./BrickTileMap.js
 
     for (let i = 0; i < brickRects.length; i += 1) {
       const br = brickRects[i];
@@ -288,7 +291,11 @@ function Game() {
 
     // Default to swing from upper left of flyer
     const swipeRadius = 50;
-    const swipeCircle = { x: f.phaserBody.x, y: f.phaserBody.y + (f.phaserBody.height * 0.125), r: swipeRadius };
+    const swipeCircle = {
+      x: f.phaserBody.x,
+      y: f.phaserBody.y + (f.phaserBody.height * 0.125),
+      r: swipeRadius,
+    };
 
     // If facing right, swipe from middle right
     if (f.dir > 0) swipeCircle.x += f.phaserBody.width;
@@ -320,7 +327,6 @@ function Game() {
   }
 
   function damageBrick(brick, flyer) {
-    console.log('damageBrick', brick.key);
     if (brick.key === 'block') {
       brick.loadTexture('block-damaged');
     } else if (brick.key === 'block-damaged') {
