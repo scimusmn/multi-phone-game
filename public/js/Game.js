@@ -1,12 +1,20 @@
 /* eslint no-console: 0 */
 /* eslint max-len: ["error", { "code": 100 }] */
+/* eslint no-use-before-define: 0 */
+/* eslint-disable no-unused-vars */
+/* eslint no-param-reassign: 0 */
 /* eslint no-undef: 0 */
 
 function Game(_mapLoader) {
   const ROUND_DURATION = 40; // 75
   const LOBBY_DURATION = 10; // 35
 
-  const _this = this;
+  const GAME_STAGE_WIDTH = 1666;
+  const GAME_STAGE_HEIGHT = 1080;
+
+  const DEBUG_MODE = true;
+
+  const thisRef = this;
   let currentFrameRequest = 0;
   const flyers = [];
   const asteroids = [];
@@ -22,15 +30,21 @@ function Game(_mapLoader) {
   /* ================= */
   /* PHASER GAME LAYER */
   /* ================= */
-  const game = new Phaser.Game(1666, 1080, Phaser.AUTO, 'stage', {
-    preload: phaserPreload, create: phaserCreate, update: phaserUpdate, render: phaserRender,
-  });
+  const game = new Phaser.Game(
+    GAME_STAGE_WIDTH,
+    GAME_STAGE_HEIGHT,
+    Phaser.AUTO, 'stage', {
+      preload: phaserPreload,
+      create: phaserCreate,
+      update: phaserUpdate,
+      render: phaserRender,
+    },
+  );
 
   /* Phaser variables */
   const flyerSpeedVertical = 30;
   const flyerSpeedHorizontal = 25;
 
-  const debugMode = false;
   const debugFlyerData = {
     userid: 'debug-user-id12345',
     usercolor: '#FD6E83',
@@ -64,6 +78,32 @@ function Game(_mapLoader) {
     game.load.atlasJSONHash('led', 'img/sprites/led.png', 'img/sprites/led.json');
   }
 
+  function clearAllBricks() {
+    brickPlatforms.removeAll(true);
+  }
+
+  function createBrickPlatforms() {
+    if (brickPlatforms) {
+      clearAllBricks();
+    } else {
+      brickPlatforms = game.add.group();
+    }
+
+    const brickRects = _mapLoader.getRandomBrickMap(); // Available from ./BrickTileMap.js
+
+    for (let i = 0; i < brickRects.length; i += 1) {
+      const br = brickRects[i];
+
+      const platform = brickPlatforms.create(br.x, br.y, 'block');
+      platform.width = br.w;
+      platform.height = br.h;
+
+      game.physics.ninja.enable(platform, 3);
+      platform.body.immovable = true;
+      platform.body.gravityScale = 0;
+    }
+  }
+
   function phaserCreate() {
     // Physics system
     game.physics.startSystem(Phaser.Physics.NINJA);
@@ -75,7 +115,7 @@ function Game(_mapLoader) {
     cursors = game.input.keyboard.createCursorKeys();
     spaceButton = game.input.keyboard.addKey(Phaser.Keyboard.SPACEBAR);
     spaceButton.onDown.add(() => {
-      _this.controlTap(debugFlyerData);
+      thisRef.controlTap(debugFlyerData);
     }, this);
 
     winnerCrown = game.add.sprite(0, 0, 'crown');
@@ -100,8 +140,8 @@ function Game(_mapLoader) {
     // Generate brick tile pattern.
     createBrickPlatforms();
 
-    if (debugMode === true) {
-      _this.addPlayer(debugFlyerData);
+    if (DEBUG_MODE === true) {
+      thisRef.addPlayer(debugFlyerData);
     }
   }
 
@@ -178,32 +218,6 @@ function Game(_mapLoader) {
     return [flyerGroup.body, flyerSprite, flyerInner];
   }
 
-  function clearAllBricks() {
-    brickPlatforms.removeAll(true);
-  }
-
-  function createBrickPlatforms() {
-    if (brickPlatforms) {
-      clearAllBricks();
-    } else {
-      brickPlatforms = game.add.group();
-    }
-
-    const brickRects = _mapLoader.getRandomBrickMap(); // Available from ./BrickTileMap.js
-
-    for (let i = 0; i < brickRects.length; i += 1) {
-      const br = brickRects[i];
-
-      const platform = brickPlatforms.create(br.x, br.y, 'block');
-      platform.width = br.w;
-      platform.height = br.h;
-
-      game.physics.ninja.enable(platform, 3);
-      platform.body.immovable = true;
-      platform.body.gravityScale = 0;
-    }
-  }
-
   function phaserUpdate() {
     // Collisions between flyers and brick platforms
     game.physics.ninja.collide(allFlyersGroup, brickPlatforms);
@@ -215,7 +229,7 @@ function Game(_mapLoader) {
       controllerInput(flyers[i]);
     }
 
-    if (debugMode === true) {
+    if (DEBUG_MODE === true) {
       keyboardInput(flyers[0]);
     }
   }
@@ -309,17 +323,15 @@ function Game(_mapLoader) {
 
       // Skip bricks that are
       // already smashed
-      if (!brick.visible) {
-        continue;
-      }
+      if (brick.visible) {
+        testRect = {
+          x: brick.x, y: brick.y, w: brick.width, h: brick.height,
+        };
 
-      testRect = {
-        x: brick.x, y: brick.y, w: brick.width, h: brick.height,
-      };
-
-      if (rectCircleCollision(swipeCircle, testRect)) {
-        damageBrick(brick, f);
-        didBustBrick = true;
+        if (rectCircleCollision(swipeCircle, testRect)) {
+          damageBrick(brick, f);
+          didBustBrick = true;
+        }
       }
     }
 
@@ -355,7 +367,7 @@ function Game(_mapLoader) {
 
     brickEmitter.setXSpeed(20 * dir, 400 * dir);
 
-    //  The first parameter sets the effect to "explode" which means all particles are emitted at once
+    //  First parameter sets effect to "explode" which means all particles are emitted at once
     //  The second gives each particle a 2000ms lifespan
     //  The third is ignored when using burst/explode mode
     //  The final parameter (10) is how many particles will be emitted in this single burst
@@ -378,7 +390,7 @@ function Game(_mapLoader) {
   }
 
   function phaserRender() {
-    if (debugMode == true) {
+    if (DEBUG_MODE === true) {
       game.debug.text(`flyer count: ${flyers.length}`, 256, 64);
 
       if (flyers.length > 0) {
@@ -395,12 +407,12 @@ function Game(_mapLoader) {
   /* PUBLIC METHODS */
   /* ============== */
 
-  this.init = function (_stageDiv) {
+  this.init = (_stageDiv) => {
     stageDiv = _stageDiv;
     this.start();
   };
 
-  this.setCallbacks = function (forceDisconnect, win, lose, points, stun) {
+  this.setCallbacks = (forceDisconnect, win, lose, points, stun) => {
     onForceDisconnectCallback = forceDisconnect;
     winCallback = win;
     loseCallback = lose;
@@ -408,7 +420,7 @@ function Game(_mapLoader) {
     stunCallback = stun;
   };
 
-  this.start = function () {
+  this.start = () => {
     // Start game loop
     currentFrameRequest = window.requestAnimationFrame(gameLoop);
 
@@ -429,7 +441,7 @@ function Game(_mapLoader) {
       if (flyers.length > 0) updateScoreboard();
 
       if (roundCountdown < 0) {
-        roundCountdown++;
+        roundCountdown += 1;
 
         $('#round-countdown').text(Math.abs(roundCountdown));
 
@@ -453,14 +465,14 @@ function Game(_mapLoader) {
     }, 1000);
   };
 
-  this.stop = function () {
+  this.stop = () => {
     // Stop game loop
     window.cancelAnimationFrame(currentFrameRequest);
 
     // TODO: If this ever gets used, stop all timers
   };
 
-  this.setBounds = function (x, y, w, h) {
+  this.setBounds = (x, y, w, h) => {
     stageBounds = {
       left: x, ceil: y, floor: h, right: w,
     };
@@ -469,8 +481,9 @@ function Game(_mapLoader) {
     stageBounds.floor -= 46;
   };
 
-  this.addPlayer = function (data) {
+  this.addPlayer = (data) => {
     // Add new flyer div to stage
+    // eslint-disable-next-line max-len
     $(stageDiv).append(`<div id="flyer_${data.userid}" class="flyer" ><p style="color:${data.usercolor};">${data.nickname}</p><img id="fist" src="img/hero_fist.png"/><img id="idle" src="img/hero_idle.png"/><img id="fly" src="img/hero_fly.png"/></div>`);
     const flyerDiv = $(`#flyer_${data.userid}`);
 
@@ -485,7 +498,13 @@ function Game(_mapLoader) {
     $(flyerDiv).append(highlightRing);
     TweenMax.set($(highlightRing), { css: { opacity: 0.0 } });
     TweenMax.to($(highlightRing), 0.2, {
-      css: { opacity: 1, scale: 0.9 }, ease: Power1.easeOut, delay: 0.3, repeat: 11, yoyo: true, onComplete: removeElement, onCompleteParams: [highlightRing],
+      css: { opacity: 1, scale: 0.9 },
+      ease: Power1.easeOut,
+      delay: 0.3,
+      repeat: 11,
+      yoyo: true,
+      onComplete: removeElement,
+      onCompleteParams: [highlightRing],
     });
 
     const phaserObj = addPhaserBody(data);
@@ -522,7 +541,7 @@ function Game(_mapLoader) {
     flyers.push(newFlyer);
   };
 
-  this.removePlayer = function (data) {
+  this.removePlayer = (data) => {
     console.log(`Game.removePlayer: ${data}`);
 
     // Remove flyer from stage, phaser system, and game loop
@@ -536,12 +555,12 @@ function Game(_mapLoader) {
     }
 
     // Remove from flyers array.
-    for (i = flyers.length - 1; i >= 0; i--) {
-      if (flyers[i].userid == data.userid) flyers.splice(i, 1);
+    for (i = flyers.length - 1; i >= 0; i -= 1) {
+      if (flyers[i].userid === data.userid) flyers.splice(i, 1);
     }
   };
 
-  this.controlVector = function (data) {
+  this.controlVector = (data) => {
     const f = lookupFlyer(data.userid);
     if (f === undefined) return;
 
@@ -558,14 +577,26 @@ function Game(_mapLoader) {
     f.ay = Math.sin(data.angle) * data.magnitude;
   };
 
-  this.controlTap = function (data) {
+  this.controlTap = (data) => {
     const f = lookupFlyer(data.userid);
     if (f === undefined) return;
     if (f.stunned) return;
 
     // Swipe action
-    TweenLite.set(f.fistDiv, { css: { rotation: -60 * f.dir, opacity: 1, transformOrigin: '50% 100% 0' } });
-    TweenMax.to(f.fistDiv, 0.4, { css: { rotation: 330 * f.dir, opacity: 0 }, ease: Power3.easeOut });
+    TweenLite.set(f.fistDiv, {
+      css: {
+        rotation: -60 * f.dir,
+        opacity: 1,
+        transformOrigin: '50% 100% 0',
+      },
+    });
+    TweenMax.to(f.fistDiv, 0.4, {
+      css: {
+        rotation: 330 * f.dir,
+        opacity: 0,
+      },
+      ease: Power3.easeOut,
+    });
 
     // Destroy asteroids
     const pnts = smashAsteroids(f.phaserBody.x + 17, f.phaserBody.y + 25, f.dir, f.color);
@@ -602,11 +633,11 @@ function Game(_mapLoader) {
       if (flyer.gas === true) {
         flyer.deadCount = 0;
       } else {
-        flyer.deadCount++;
+        flyer.deadCount += 1;
 
         if (flyer.deadCount > 1800) {
           // Never kill debug flyer.
-          if (flyer.userid == 'debug-user-id12345') {
+          if (flyer.userid === 'debug-user-id12345') {
             flyer.deadCount = 0;
             return;
           }
@@ -615,7 +646,11 @@ function Game(_mapLoader) {
           // Emit disconnect event to node
           // 1800 frames at 60fps is about 30 seconds
           if (onForceDisconnectCallback) {
-            onForceDisconnectCallback.call(undefined, { userid: flyer.userid, socketid: flyer.socketid });
+            onForceDisconnectCallback.call(undefined,
+              {
+                userid: flyer.userid,
+                socketid: flyer.socketid,
+              });
           }
 
           return;
@@ -623,7 +658,14 @@ function Game(_mapLoader) {
       }
 
       // Update position based on Phaser physics body
-      TweenLite.set($(flyer.div), { css: { left: flyer.phaserBody.x - (flyer.phaserBody.width * 0.6), top: flyer.phaserBody.y - (flyer.phaserBody.height * 0.9) } });
+      TweenLite.set($(flyer.div),
+        {
+          css:
+        {
+          left: flyer.phaserBody.x - (flyer.phaserBody.width * 0.6),
+          top: flyer.phaserBody.y - (flyer.phaserBody.height * 0.9),
+        },
+        });
     });
 
     // Wait for next frame
@@ -633,7 +675,7 @@ function Game(_mapLoader) {
   function smashAsteroids(mineX, mineY, smashDir, ptColor) {
     let damageDealt = 0;
 
-    for (a = asteroids.length - 1; a >= 0; a--) {
+    for (a = asteroids.length - 1; a >= 0; a -= 1) {
       const ast = asteroids[a];
       const aL = parseInt($(ast.div).css('left'), 10) + (ast.diam * 0.5);
       const aT = parseInt($(ast.div).css('top'), 10) + (ast.diam * 0.5);
@@ -655,7 +697,11 @@ function Game(_mapLoader) {
 
         if (ast.health <= 0) {
           // Remove from stage
-          TweenLite.to($(ast.div), 0.3, { css: { opacity: 0 }, onComplete: removeElement, onCompleteParams: [ast.div] });
+          TweenLite.to($(ast.div), 0.3, {
+            css: { opacity: 0 },
+            onComplete: removeElement,
+            onCompleteParams: [ast.div],
+          });
 
           // Remove from game loop
           asteroids.splice(a, 1);
@@ -679,25 +725,28 @@ function Game(_mapLoader) {
     let oX;
     let oY;
 
-    for (i = flyers.length - 1; i >= 0; i--) {
+    for (i = flyers.length - 1; i >= 0; i -= 1) {
       // Skip attacking flyer and stunned flyers
-      if (flyers[i].userid == attackingFlyer.userid || flyers[i].stunned === true) {
-        continue;
-      }
+      if (flyers[i].userid !== attackingFlyer.userid && flyers[i].stunned === false) {
+        otherFlyer = flyers[i];
+        oX = parseInt(otherFlyer.phaserBody.x, 10);
+        oY = parseInt(otherFlyer.phaserBody.y, 10);
 
-      otherFlyer = flyers[i];
-      oX = parseInt(otherFlyer.phaserBody.x, 10);
-      oY = parseInt(otherFlyer.phaserBody.y, 10);
-
-      if (dist(oX, oY, attackingFlyer.x, attackingFlyer.y) < stunRadius) {
+        if (dist(oX, oY, attackingFlyer.x, attackingFlyer.y) < stunRadius) {
         // Successful stun!
-        otherFlyer.stunned = true;
-        TweenMax.to($(otherFlyer.div), 0.2, {
-          css: { opacity: 0.5 }, ease: Power2.easeInOut, repeat: 12, yoyo: true, onComplete: liftStun, onCompleteParams: [otherFlyer],
-        });
+          otherFlyer.stunned = true;
+          TweenMax.to($(otherFlyer.div), 0.2, {
+            css: { opacity: 0.5 },
+            ease: Power2.easeInOut,
+            repeat: 12,
+            yoyo: true,
+            onComplete: liftStun,
+            onCompleteParams: [otherFlyer],
+          });
 
-        if (stunCallback) {
-          stunCallback.call(undefined, otherFlyer.socketid);
+          if (stunCallback) {
+            stunCallback.call(undefined, otherFlyer.socketid);
+          }
         }
       }
     }
@@ -715,7 +764,6 @@ function Game(_mapLoader) {
     $('#new-round').hide();
     $('#join-msg').show();
 
-    // TweenMax.to( $("#join-msg"), 7.3, { css: { bottom:130 }, ease:Power2.easeInOut, repeat:99, yoyo:true } );
     roundCountdown = ROUND_DURATION;
 
     // Reset everyone's score
@@ -745,7 +793,7 @@ function Game(_mapLoader) {
 
       // Emit lose event to every other player
       if (loseCallback) {
-        for (let i = 1; i < flyers.length; i++) {
+        for (let i = 1; i < flyers.length; i += 1) {
           loseCallback.call(undefined, flyers[i].socketid);
         }
       }
@@ -759,20 +807,22 @@ function Game(_mapLoader) {
     if (roundCountdown < 0) {
       // TEMP (shouldn't reach outside game stage)
       $('#player-list').empty();
-      for (let i = 0; i < flyers.length; i++) {
+      for (let i = 0; i < flyers.length; i += 1) {
+        // eslint-disable-next-line max-len
         $('#player-list').append($('<li>').html(`<span style="color:${flyers[i].color};">${flyers[i].nickname} </span> &nbsp; ${flyers[i].score}`));
       }
     }
   }
 
   function resetScoreboard() {
-    for (let i = 0; i < flyers.length; i++) {
+    for (let i = 0; i < flyers.length; i += 1) {
       flyers[i].score = 0;
     }
   }
 
   function releasePuff(flyer) {
     // Add to stage
+    // eslint-disable-next-line max-len
     const pDiv = $(`<div class="puff-ring" style="color:${flyer.color}; background-color:${flyer.color};"></div>`);
     $(stageDiv).append(pDiv);
 
@@ -789,7 +839,10 @@ function Game(_mapLoader) {
     // Scale and fade
     TweenLite.to($(pDiv), 0.15, { css: { left: tX, top: tY }, ease: Power3.easeOut });
     TweenLite.to($(pDiv), 0.2, {
-      css: { opacity: 0.0 }, ease: Power3.easeIn, onComplete: removeElement, onCompleteParams: [pDiv],
+      css: { opacity: 0.0 },
+      ease: Power3.easeIn,
+      onComplete: removeElement,
+      onCompleteParams: [pDiv],
     });
   }
 
@@ -809,7 +862,11 @@ function Game(_mapLoader) {
     // Scale and fade
     TweenLite.to($(pDiv), 0.35, { css: { scale: 1, left: x, top: y }, ease: Power3.easeOut });
     TweenLite.to($(pDiv), 0.5, {
-      css: { opacity: 0 }, delay: 0.35, ease: Power1.easeIn, onComplete: removeElement, onCompleteParams: [pDiv],
+      css: { opacity: 0 },
+      delay: 0.35,
+      ease: Power1.easeIn,
+      onComplete: removeElement,
+      onCompleteParams: [pDiv],
     });
   }
 
@@ -835,6 +892,7 @@ function Game(_mapLoader) {
       diam = 490;
     }
 
+    // eslint-disable-next-line max-len
     const aDiv = $(`<div class="asteroid" style=""><img src="img/asteroids/${astType}-asteroid-dark.png"/></div>`);
 
     $(stageDiv).append(aDiv);
@@ -856,7 +914,13 @@ function Game(_mapLoader) {
 
     // Pop in
     TweenLite.from($(aDiv), 1.5, { css: { scale: 0, opacity: 0 }, ease: Elastic.easeOut });
-    TweenLite.from($(aDiv), 10, { css: { left: startX + (Math.random() * 200 - 100), top: startY + (Math.random() * 200 - 100), rotation: Math.random() * 90 - 45 } });
+    TweenLite.from($(aDiv), 10, {
+      css: {
+        left: startX + (Math.random() * 200 - 100),
+        top: startY + (Math.random() * 200 - 100),
+        rotation: Math.random() * 90 - 45,
+      },
+    });
 
     const ast = {
       div: aDiv, x: startX, y: startY, diam, health,
@@ -866,9 +930,10 @@ function Game(_mapLoader) {
 
   function explodeAsteroid(x, y, diam, dir) {
     // Replace with chunks of asteroid dispersing
-    for (let i = 0; i < 5; i++) {
+    for (let i = 0; i < 5; i += 1) {
       const astNum = Math.ceil(Math.random() * 6);
 
+      // eslint-disable-next-line max-len
       const aDiv = $(`<div class="asteroid" style=""><img src="img/asteroids/a${astNum}.png"/></div>`);
 
       $(stageDiv).append(aDiv);
@@ -879,7 +944,14 @@ function Game(_mapLoader) {
       TweenLite.set($(aDiv), { css: { left: x, top: y, scale } });
 
       // Tween from center
-      TweenLite.to($(aDiv), 0.4, { css: { left: (x + Math.random() * 200 - 100) + (dir * 100), top: (y + Math.random() * 240 - 120), rotation: Math.random() * 250 - 125 }, ease: Power2.easeOut });
+      TweenLite.to($(aDiv), 0.4, {
+        css: {
+          left: (x + Math.random() * 200 - 100) + (dir * 100),
+          top: (y + Math.random() * 240 - 120),
+          rotation: Math.random() * 250 - 125,
+        },
+        ease: Power2.easeOut,
+      });
 
       // Fade out and remove chunk
       TweenLite.to($(aDiv), 0.4, {
@@ -889,12 +961,15 @@ function Game(_mapLoader) {
   }
 
   function clearAsteroids() {
-    for (a = asteroids.length - 1; a >= 0; a--) {
+    for (a = asteroids.length - 1; a >= 0; a -= 1) {
       const ast = asteroids[a];
 
       // Fade out
       TweenLite.to($(ast.div), 0.5, {
-        css: { opacity: 0 }, delay: Math.random() * 0.5, onComplete: removeElement, onCompleteParams: [ast.div],
+        css: { opacity: 0 },
+        delay: Math.random() * 0.5,
+        onComplete: removeElement,
+        onCompleteParams: [ast.div],
       });
 
       // Remove from game loop
@@ -909,9 +984,10 @@ function Game(_mapLoader) {
    */
 
   function lookupFlyer(id) {
-    for (let i = 0; i < flyers.length; i++) {
-      if (flyers[i].userid == id) return flyers[i];
+    for (let i = 0; i < flyers.length; i += 1) {
+      if (flyers[i].userid === id) return flyers[i];
     }
+    return null;
   }
 
   function removeElement(el) {
@@ -923,7 +999,8 @@ function Game(_mapLoader) {
   }
 
   function dist(x, y, x0, y0) {
-    return Math.sqrt((x -= x0) * x + (y -= y0) * y);
+    const result = Math.sqrt((x -= x0) * x + (y -= y0) * y);
+    return result;
   }
 
   function clamp(val, min, max) {
@@ -964,7 +1041,7 @@ function Game(_mapLoader) {
   function polarity(x) {
     // Convert to a number
     x = +x;
-    if (x === 0 || isNaN(x)) {
+    if (x === 0 || Number.isNaN(x)) {
       return x;
     }
 

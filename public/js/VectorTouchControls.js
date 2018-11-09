@@ -1,5 +1,6 @@
 /* eslint no-console: 0 */
 /* eslint max-len: ["error", { "code": 100 }] */
+/* eslint-disable no-unused-vars */
 /* eslint no-undef: 0 */
 
 function VectorTouchControls(socket, color) {
@@ -7,10 +8,10 @@ function VectorTouchControls(socket, color) {
   let angle;
   let dist;
   let magnitude;
-  const screenWidth = parseInt($('body').width());
-  const screenHeight = parseInt($('body').height());
-  let centerX = parseInt(screenWidth / 2);
-  let centerY = parseInt(screenHeight / 2);
+  const screenWidth = parseInt($('body').width(), 2);
+  const screenHeight = parseInt($('body').height(), 2);
+  let centerX = parseInt(screenWidth / 2, 2);
+  let centerY = parseInt(screenHeight / 2, 2);
   const shortest = Math.min(centerX, centerY);
   let mouseIsDown = false;
 
@@ -18,28 +19,6 @@ function VectorTouchControls(socket, color) {
   const ctx = document.getElementById('canvas').getContext('2d');
   $('#canvas').attr('width', screenWidth);
   $('#canvas').attr('height', screenHeight);
-
-  this.enable = function () {
-    document.addEventListener('mousedown', mousedown, false);
-    document.addEventListener('mousemove', mousemove, false);
-    document.addEventListener('mouseup', mouseup, false);
-
-    document.addEventListener('touchstart', touchEvent, false);
-    document.addEventListener('touchend', touchEvent, false);
-    document.addEventListener('touchcancel', touchEvent, false);
-    document.addEventListener('touchmove', touchEvent, false);
-  };
-
-  this.disable = function () {
-    document.removeEventListener('mousedown', mousedown, false);
-    document.removeEventListener('mousemove', mousemove, false);
-    document.removeEventListener('mouseup', mouseup, false);
-
-    document.removeEventListener('touchstart', touchEvent, false);
-    document.removeEventListener('touchend', touchEvent, false);
-    document.removeEventListener('touchcancel', touchEvent, false);
-    document.removeEventListener('touchmove', touchEvent, false);
-  };
 
   // Util map function
   function map(value, low1, high1, low2, high2) {
@@ -51,118 +30,52 @@ function VectorTouchControls(socket, color) {
     return Math.min(Math.max(value, min), max);
   }
 
-  function mousedown(event) {
-    mouseIsDown = true;
-    inputStart(event.pageX, event.pageY);
+  function clearCanvas() {
+    ctx.clearRect(0, 0, screenWidth, screenHeight);
   }
 
-  function mousemove(event) {
-    if (mouseIsDown === true) {
-      inputMove(event.pageX, event.pageY);
-    }
+  // Caculate gradient color
+  function calcColor(min, max, val) {
+    const minHue = 240;
+    const maxHue = 0;
+    const curPercent = (val - min) / (max - min);
+    const colString = `hsl(${(curPercent * (maxHue - minHue)) + minHue},100%,50%)`;
+    return colString;
   }
 
-  function mouseup(event) {
-    mouseIsDown = false;
-    inputUp();
-  }
+  function drawArrow(xPos, yPos) {
+    // Length
+    // var r = clamp((0.5 + 1) * 5, min, max);
+    const r = (0.5 + 1) * 5;
+    const endX = xPos + r * Math.cos(angle);
+    const endY = yPos + r * Math.sin(angle);
 
-  function touchEvent(event) {
-    if (event.type == 'touchmove') {
-      inputMove(event.touches[0].pageX, event.touches[0].pageY);
-    } else if (event.type == 'touchstart') {
-      inputStart(event.touches[0].pageX, event.touches[0].pageY);
-    } else if (event.touches.length === 0) {
-      inputUp();
-    }
-  }
+    const p1x = xPos + (r * 0.81) * Math.cos(angle - 83);
+    const p1y = yPos + (r * 0.81) * Math.sin(angle - 83);
+    const p2x = xPos + (r * 0.81) * Math.cos(angle + 83);
+    const p2y = yPos + (r * 0.81) * Math.sin(angle + 83);
 
-  function inputStart(inputX, inputY) {
-    centerX = inputX;
-    centerY = inputY;
-    clearCanvas();
-  }
+    ctx.strokeStyle = '#666';
+    // var pdist = Math.sqrt((endX - xPos) * endX + (endY - yPos) * endY);
 
-  function inputMove(inputX, inputY) {
-    // Angle from center of screen
-    angle = Math.atan2(inputY - centerY, inputX - centerX);
+    const a = xPos - centerX;
+    const b = yPos - centerY;
+    const c = Math.sqrt(a * a + b * b);
 
-    // Distance from center in pixels
-    let ix = inputX;
-    let iy = inputY;
-    dist = Math.sqrt((ix -= centerX) * ix + (iy -= centerY) * iy);
+    // Normalized (0-1) based on shortest screen side.
+    const pdist = map(c, 0, shortest, 0, 0.3) + 0.4;
 
-    // Normalized magnitude (0-1) based on shortest screen side.
-    magnitude = map(dist, 0, shortest, 0, 1);
+    // Uncomment for user color
+    ctx.strokeStyle = currentsColor;
 
-    // Dispatch updated control vector
-    socket.emit('control-vector', {
-      angle: angle.toFixed(4),
-      magnitude: magnitude.toFixed(4),
-    });
-
-    // Draw UI
-    drawUI(inputX, inputY);
-  }
-
-  function inputUp() {
-    if (magnitude === 0) {
-      // Touch never moved. Was tap.
-      socket.emit('control-tap', {});
-    } else {
-      // Touch finished. Set vectors to 0;
-      socket.emit('control-vector', {
-        angle: 0,
-        magnitude: 0,
-      });
-      magnitude = angle = 0;
-    }
-
-    clearCanvas();
-  }
-
-  // Canvas drawing
-  function drawUI(tx, ty) {
-    clearCanvas();
-
-    // Fill background with rainbow currents
-    drawCurrents(tx, ty);
+    // Uncomment for rainbow colors
+    ctx.strokeStyle = calcColor(0, 1, pdist);
 
     ctx.beginPath();
-    ctx.lineWidth = 5 - (2 * magnitude);
-    ctx.moveTo(centerX, centerY);
-    ctx.lineTo(tx, ty);
-    ctx.strokeStyle = '#fff';
-    ctx.fillStyle = '#333';
-    ctx.fill();
+    ctx.moveTo(p1x, p1y);
+    ctx.lineTo(endX, endY);
+    ctx.lineTo(p2x, p2y);
     ctx.stroke();
-
-    // Ring around center/origin
-    ctx.beginPath();
-    ctx.lineWidth = (3 * magnitude);
-    ctx.arc(centerX, centerY, 12 - (4 * magnitude), 0, 2 * Math.PI);
-    ctx.fill();
-    ctx.stroke();
-
-    // Ring around touch point
-    ctx.beginPath();
-    ctx.arc(tx, ty, 8, 0, 2 * Math.PI);
-    ctx.stroke();
-
-    ctx.save();
-    ctx.translate(tx, ty);
-    ctx.rotate(angle);
-    const fingyOffset = 95;
-
-    ctx.fillStyle = '#ddd';
-    ctx.beginPath();
-    ctx.moveTo(0 + fingyOffset, 0);
-    ctx.lineTo(-24 + fingyOffset, -20);
-    ctx.lineTo(-19 + fingyOffset, 0);
-    ctx.lineTo(-24 + fingyOffset, 20);
-    ctx.fill();
-
-    ctx.restore();
   }
 
   function drawCurrents(tx, ty) {
@@ -219,57 +132,149 @@ function VectorTouchControls(socket, color) {
     }
   }
 
-  function calcColor(min, max, val) {
-    const minHue = 240;
-    const maxHue = 0;
-    const curPercent = (val - min) / (max - min);
-    const colString = `hsl(${(curPercent * (maxHue - minHue)) + minHue},100%,50%)`;
-    return colString;
-  }
+  // Canvas drawing
+  function drawUI(tx, ty) {
+    clearCanvas();
 
-  function drawArrow(xPos, yPos) {
-    // Length
-    // var r = clamp((0.5 + 1) * 5, min, max);
-    const r = (0.5 + 1) * 5;
-    const endX = xPos + r * Math.cos(angle);
-    const endY = yPos + r * Math.sin(angle);
-
-    const p1x = xPos + (r * 0.81) * Math.cos(angle - 83);
-    const p1y = yPos + (r * 0.81) * Math.sin(angle - 83);
-    const p2x = xPos + (r * 0.81) * Math.cos(angle + 83);
-    const p2y = yPos + (r * 0.81) * Math.sin(angle + 83);
-
-    ctx.strokeStyle = '#666';
-    // var pdist = Math.sqrt((endX - xPos) * endX + (endY - yPos) * endY);
-
-    const a = xPos - centerX;
-    const b = yPos - centerY;
-    const c = Math.sqrt(a * a + b * b);
-
-    // Normalized (0-1) based on shortest screen side.
-    const pdist = map(c, 0, shortest, 0, 0.3) + 0.4;
-
-    // Uncomment for user color
-    ctx.strokeStyle = currentsColor;
-
-    // Uncomment for rainbow colors
-    ctx.strokeStyle = calcColor(0, 1, pdist);
+    // Fill background with rainbow currents
+    drawCurrents(tx, ty);
 
     ctx.beginPath();
-    ctx.moveTo(p1x, p1y);
-    ctx.lineTo(endX, endY);
-    ctx.lineTo(p2x, p2y);
+    ctx.lineWidth = 5 - (2 * magnitude);
+    ctx.moveTo(centerX, centerY);
+    ctx.lineTo(tx, ty);
+    ctx.strokeStyle = '#fff';
+    ctx.fillStyle = '#333';
+    ctx.fill();
     ctx.stroke();
+
+    // Ring around center/origin
+    ctx.beginPath();
+    ctx.lineWidth = (3 * magnitude);
+    ctx.arc(centerX, centerY, 12 - (4 * magnitude), 0, 2 * Math.PI);
+    ctx.fill();
+    ctx.stroke();
+
+    // Ring around touch point
+    ctx.beginPath();
+    ctx.arc(tx, ty, 8, 0, 2 * Math.PI);
+    ctx.stroke();
+
+    ctx.save();
+    ctx.translate(tx, ty);
+    ctx.rotate(angle);
+    const fingyOffset = 95;
+
+    ctx.fillStyle = '#ddd';
+    ctx.beginPath();
+    ctx.moveTo(0 + fingyOffset, 0);
+    ctx.lineTo(-24 + fingyOffset, -20);
+    ctx.lineTo(-19 + fingyOffset, 0);
+    ctx.lineTo(-24 + fingyOffset, 20);
+    ctx.fill();
+
+    ctx.restore();
   }
 
-  function clearCanvas() {
-    ctx.clearRect(0, 0, screenWidth, screenHeight);
+  function inputMove(inputX, inputY) {
+    // Angle from center of screen
+    angle = Math.atan2(inputY - centerY, inputX - centerX);
+
+    // Distance from center in pixels
+    let ix = inputX;
+    let iy = inputY;
+    dist = Math.sqrt((ix -= centerX) * ix + (iy -= centerY) * iy);
+
+    // Normalized magnitude (0-1) based on shortest screen side.
+    magnitude = map(dist, 0, shortest, 0, 1);
+
+    // Dispatch updated control vector
+    socket.emit('control-vector', {
+      angle: angle.toFixed(4),
+      magnitude: magnitude.toFixed(4),
+    });
+
+    // Draw UI
+    drawUI(inputX, inputY);
   }
+
+  function inputUp() {
+    if (magnitude === 0) {
+      // Touch never moved. Was tap.
+      socket.emit('control-tap', {});
+    } else {
+      // Touch finished. Set vectors to 0;
+      socket.emit('control-vector', {
+        angle: 0,
+        magnitude: 0,
+      });
+      magnitude = 0;
+      angle = 0;
+    }
+
+    clearCanvas();
+  }
+
+  function inputStart(inputX, inputY) {
+    centerX = inputX;
+    centerY = inputY;
+    clearCanvas();
+  }
+
+  function mousedown(event) {
+    mouseIsDown = true;
+    inputStart(event.pageX, event.pageY);
+  }
+
+  function mousemove(event) {
+    if (mouseIsDown === true) {
+      inputMove(event.pageX, event.pageY);
+    }
+  }
+
+  function mouseup(event) {
+    mouseIsDown = false;
+    inputUp();
+  }
+
+  function touchEvent(event) {
+    if (event.type === 'touchmove') {
+      inputMove(event.touches[0].pageX, event.touches[0].pageY);
+    } else if (event.type === 'touchstart') {
+      inputStart(event.touches[0].pageX, event.touches[0].pageY);
+    } else if (event.touches.length === 0) {
+      inputUp();
+    }
+  }
+
+  // Publically available enable all
+  this.enable = () => {
+    document.addEventListener('mousedown', mousedown, false);
+    document.addEventListener('mousemove', mousemove, false);
+    document.addEventListener('mouseup', mouseup, false);
+
+    document.addEventListener('touchstart', touchEvent, false);
+    document.addEventListener('touchend', touchEvent, false);
+    document.addEventListener('touchcancel', touchEvent, false);
+    document.addEventListener('touchmove', touchEvent, false);
+  };
+
+  // Publically available disable all
+  this.disable = () => {
+    document.removeEventListener('mousedown', mousedown, false);
+    document.removeEventListener('mousemove', mousemove, false);
+    document.removeEventListener('mouseup', mouseup, false);
+
+    document.removeEventListener('touchstart', touchEvent, false);
+    document.removeEventListener('touchend', touchEvent, false);
+    document.removeEventListener('touchcancel', touchEvent, false);
+    document.removeEventListener('touchmove', touchEvent, false);
+  };
 
   // This can be manually triggered
   // for stress testing many simultaneous
   // controllers without real humans.
-  this.simulateUserInput = function () {
+  this.simulateUserInput = () => {
     let simInputX = 0;
     let simInputY = 0;
     let simInputVX = 0;
