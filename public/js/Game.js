@@ -8,9 +8,11 @@
 function Game(_mapLoader) {
   // Game settings
   const DEBUG_MODE = true;
-  const ROUND_DURATION = 40; // 75
-  const LOBBY_DURATION = 10; // 35
+  const ROUND_DURATION = 9; // 75
+  const LOBBY_DURATION = 5; // 35
   const STUNS_ENABLED = true;
+  const CROWNS_ENABLED = true;
+  const POINTS_PER_BRICK = 10;
   const GAME_STAGE_WIDTH = 1666;
   const GAME_STAGE_HEIGHT = 1080;
 
@@ -51,6 +53,7 @@ function Game(_mapLoader) {
     nickname: 'Debug',
     socketid: 'debug-socket-id-abc',
   };
+
   let cursors;
   let brickPlatforms;
   let allFlyersGroup;
@@ -121,8 +124,8 @@ function Game(_mapLoader) {
     winnerCrown = game.add.sprite(0, 0, 'crown');
     winnerCrown.name = 'crown';
     winnerCrown.anchor.x = 0.5;
-    winnerCrown.anchor.y = 1.9;
-    winnerCrown.scale.setTo(0.14, 0.14);
+    winnerCrown.anchor.y = 1.8;
+    winnerCrown.scale.setTo(0.15, 0.15);
 
     // Prepare particle effects
     brickEmitter = game.add.emitter(0, 0, 100);
@@ -297,15 +300,15 @@ function Game(_mapLoader) {
     }
   }
 
-  /*
-  function crownNewWinner(flyer) {
+  function crownWinner(flyer) {
+    console.log('crownWinner');
+
     // If not already wearing crown, add.
-     if (flyer.phaserBody.sprite.children.indexOf(winnerCrown) == -1) {
-       // sprite is a part of groupA
-       flyer.phaserBody.sprite.addChild(winnerCrown);
-     }
+    // if (flyer.phaserBody.sprite.children.indexOf(winnerCrown) === -1) {
+    // sprite is a part of groupA
+    flyer.phaserBody.sprite.addChild(winnerCrown);
+    // }
   }
-  */
 
   function flyerBrickSwipe(f) {
     // Detect if any bricks were hit
@@ -360,7 +363,12 @@ function Game(_mapLoader) {
       // gameplay with 'revive'
 
       if (roundCountdown > 0) {
-        releasePoints(10, flyer.color, brick.x, brick.y - 15, flyer.dir);
+        
+        // Increment player points
+        flyer.score += POINTS_PER_BRICK;
+
+        // Display in-game points
+        releasePoints(POINTS_PER_BRICK, flyer.color, brick.x, brick.y - 15, flyer.dir);
       }
 
       particleBrickBurst(brick.x, brick.y, flyer.dir);
@@ -667,9 +675,9 @@ function Game(_mapLoader) {
     });
 
     // Destroy asteroids
-    const pnts = smashAsteroids(f.phaserBody.x + 17, f.phaserBody.y + 25, f.dir, f.color);
-    if (pnts > 0) {
-      f.score += pnts;
+    const points = smashAsteroids(f.phaserBody.x + 17, f.phaserBody.y + 25, f.dir, f.color);
+    if (points > 0) {
+      f.score += points;
 
       // Emit points event to scorer
       if (pointsCallback) {
@@ -679,8 +687,7 @@ function Game(_mapLoader) {
 
     // Stun others
     if (STUNS_ENABLED === true) {
-      const didStun = attemptStun(f);
-      console.log('STUN!', didStun);
+      attemptStun(f);
     }
 
     // Phaser attempt swipe (for bricks)
@@ -810,7 +817,6 @@ function Game(_mapLoader) {
       // Emit win event to top-scorer
       if (winCallback) {
         winCallback.call(undefined, flyers[0].socketid);
-        // crownNewWinner(flyers[0]);
       }
 
       // Emit lose event to every other player
@@ -818,6 +824,10 @@ function Game(_mapLoader) {
         for (let i = 1; i < flyers.length; i += 1) {
           loseCallback.call(undefined, flyers[i].socketid);
         }
+      }
+
+      if (CROWNS_ENABLED === true) {
+        crownWinner(flyers[0]);
       }
     }
   }
