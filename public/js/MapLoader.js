@@ -47,7 +47,7 @@ function MapLoader() {
 
     $.getJSON(`js/maps/${MAP_CONFIGS[i]}.json`, {})
       .done((json) => {
-        console.log(`Map loaded: ${json.name}. Brick count: ${json.bricks.length}`);
+        // console.log(`Map loaded: ${json.name}. Brick count: ${json.bricks.length}`);
 
         deCenterBricks(json.bricks);
         maps.push(json);

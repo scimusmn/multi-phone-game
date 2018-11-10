@@ -8,10 +8,10 @@ function VectorTouchControls(socket, color) {
   let angle;
   let dist;
   let magnitude;
-  const screenWidth = parseInt($('body').width(), 2);
-  const screenHeight = parseInt($('body').height(), 2);
-  let centerX = parseInt(screenWidth / 2, 2);
-  let centerY = parseInt(screenHeight / 2, 2);
+  const screenWidth = parseInt($('body').width(), 0);
+  const screenHeight = parseInt($('body').height(), 0);
+  let centerX = parseInt(screenWidth / 2, 0);
+  let centerY = parseInt(screenHeight / 2, 0);
   const shortest = Math.min(centerX, centerY);
   let mouseIsDown = false;
 
@@ -19,6 +19,9 @@ function VectorTouchControls(socket, color) {
   const ctx = document.getElementById('canvas').getContext('2d');
   $('#canvas').attr('width', screenWidth);
   $('#canvas').attr('height', screenHeight);
+
+  console.log('screenWidth', screenWidth);
+  console.log('screenHeight', screenHeight);
 
   // Util map function
   function map(value, low1, high1, low2, high2) {
@@ -36,7 +39,7 @@ function VectorTouchControls(socket, color) {
 
   // Caculate gradient color
   function calcColor(min, max, val) {
-    const minHue = 240;
+    const minHue = 220;
     const maxHue = 0;
     const curPercent = (val - min) / (max - min);
     const colString = `hsl(${(curPercent * (maxHue - minHue)) + minHue},100%,50%)`;
@@ -247,7 +250,7 @@ function VectorTouchControls(socket, color) {
     }
   }
 
-  // Publically available enable all
+  // Enable all touch and mouse events
   this.enable = () => {
     document.addEventListener('mousedown', mousedown, false);
     document.addEventListener('mousemove', mousemove, false);
@@ -259,7 +262,7 @@ function VectorTouchControls(socket, color) {
     document.addEventListener('touchmove', touchEvent, false);
   };
 
-  // Publically available disable all
+  // Disable all touch and mouse events
   this.disable = () => {
     document.removeEventListener('mousedown', mousedown, false);
     document.removeEventListener('mousemove', mousemove, false);

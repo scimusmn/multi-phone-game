@@ -1,6 +1,7 @@
 /* eslint no-console: 0 */
 /* eslint max-len: ["error", { "code": 100 }] */
 /* eslint no-undef: 0 */
+/* eslint no-alert: 0 */
 
 $(document).ready(() => {
   const socket = io.connect('', { path: '/socket.io' });
@@ -8,7 +9,7 @@ $(document).ready(() => {
   /**
       * Check if this device allows
       * Local Storage, which will
-      * error out on iOS Safari when
+      * error out in incognito mode when
       * you attempt to use.
       */
   function localStorageAvailable() {

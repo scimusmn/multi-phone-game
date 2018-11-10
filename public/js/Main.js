@@ -21,6 +21,7 @@ $(document).ready(() => {
   });
 
   socket.on('remove-player', (data) => {
+    console.log('socket says remove player?');
     game.removePlayer(data);
   });
 
@@ -52,11 +53,6 @@ $(document).ready(() => {
     socket.emit('controller-event', { type: 'points', socketid });
   }
 
-  function onStun(socketid) {
-    // Emit stunned user's socketid
-    socket.emit('controller-event', { type: 'stun', socketid });
-  }
-
   // Set game bounds on load/resize
   function onWindowSize() {
     const w = (this.window.innerWidth > 0) ? this.window.innerWidth : this.screen.width;
@@ -68,5 +64,5 @@ $(document).ready(() => {
 
   game.init($('#stage'));
 
-  game.setCallbacks(onForceDisconnect, onWin, onLose, onPoints, onStun);
+  game.setCallbacks(onForceDisconnect, onWin, onLose, onPoints);
 });

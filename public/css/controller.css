@@ -25,6 +25,7 @@ body {
     overflow: hidden;
     position: fixed;
     background-color: #111;
+    touch-action: none;
 
 }
 

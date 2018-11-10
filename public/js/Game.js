@@ -1,10 +1,10 @@
 /* eslint no-console: 0 */
 /* eslint max-len: ["error", { "code": 100 }] */
 /* eslint no-use-before-define: 0 */
-/* eslint-disable no-unused-vars */
-/* eslint no-param-reassign: 0 */
 /* eslint no-undef: 0 */
+/* eslint no-param-reassign: 0 */
 
+// eslint-disable-next-line no-unused-vars
 function Game(_mapLoader) {
   const ROUND_DURATION = 40; // 75
   const LOBBY_DURATION = 10; // 35
@@ -25,7 +25,6 @@ function Game(_mapLoader) {
   let winCallback;
   let loseCallback;
   let pointsCallback;
-  let stunCallback;
 
   /* ================= */
   /* PHASER GAME LAYER */
@@ -89,7 +88,7 @@ function Game(_mapLoader) {
       brickPlatforms = game.add.group();
     }
 
-    const brickRects = _mapLoader.getRandomBrickMap(); // Available from ./BrickTileMap.js
+    const brickRects = _mapLoader.getRandomBrickMap();
 
     for (let i = 0; i < brickRects.length; i += 1) {
       const br = brickRects[i];
@@ -235,22 +234,26 @@ function Game(_mapLoader) {
   }
 
   function controllerInput(flyer) {
-    const fBody = flyer.phaserBody;
-    const fSprite = flyer.phaserSprite;
-    const fInner = flyer.phaserInner;
+    const f = flyer;
+    const fBody = f.phaserBody;
+    const fSprite = f.phaserSprite;
+    const fInner = f.phaserInner;
+
 
     if (flyer.ax < 0) {
       fBody.moveLeft(flyerSpeedHorizontal * Math.abs(flyer.ax));
       fSprite.animations.play('fly');
       fInner.animations.play('fly');
-      flyer.dir = -1.0;
+      // flyer.dir = -1.0;
+      f.dir = -1.0;
       fSprite.scale.setTo(flyer.dir, 1.0);
       fInner.scale.setTo(-flyer.dir, 1.0);
     } else if (flyer.ax > 0) {
       fBody.moveRight(flyerSpeedHorizontal * Math.abs(flyer.ax));
       fSprite.animations.play('fly');
       fInner.animations.play('fly');
-      flyer.dir = 1.0;
+      // flyer.dir = 1.0;
+      f.dir = 1.0;
       fSprite.scale.setTo(flyer.dir, 1.0);
       fInner.scale.setTo(-flyer.dir, 1.0);
     } else {
@@ -268,18 +271,19 @@ function Game(_mapLoader) {
   function keyboardInput(flyer) {
     if (flyers.length === 0) return;
 
-    const fBody = flyer.phaserBody;
-    const fSprite = flyer.phaserSprite;
+    const f = flyer;
+    const fBody = f.phaserBody;
+    const fSprite = f.phaserSprite;
 
     if (cursors.left.isDown) {
       fBody.moveLeft(flyerSpeedHorizontal);
       fSprite.animations.play('fly');
-      flyer.dir = -1.0;
+      f.dir = -1.0;
       fSprite.scale.setTo(flyer.dir, 1.0);
     } else if (cursors.right.isDown) {
       fBody.moveRight(flyerSpeedHorizontal);
       fSprite.animations.play('fly');
-      flyer.dir = 1.0;
+      f.dir = 1.0;
       fSprite.scale.setTo(flyer.dir, 1.0);
     } else {
       fSprite.animations.play('idle');
@@ -292,13 +296,15 @@ function Game(_mapLoader) {
     }
   }
 
+  /*
   function crownNewWinner(flyer) {
     // If not already wearing crown, add.
-    /* if (flyer.phaserBody.sprite.children.indexOf(winnerCrown) == -1) {
+     if (flyer.phaserBody.sprite.children.indexOf(winnerCrown) == -1) {
        // sprite is a part of groupA
        flyer.phaserBody.sprite.addChild(winnerCrown);
-     } */
+     }
   }
+  */
 
   function flyerBrickSwipe(f) {
     // Detect if any bricks were hit
@@ -412,12 +418,11 @@ function Game(_mapLoader) {
     this.start();
   };
 
-  this.setCallbacks = (forceDisconnect, win, lose, points, stun) => {
+  this.setCallbacks = (forceDisconnect, win, lose, points) => {
     onForceDisconnectCallback = forceDisconnect;
     winCallback = win;
     loseCallback = lose;
     pointsCallback = points;
-    stunCallback = stun;
   };
 
   this.start = () => {
@@ -483,8 +488,16 @@ function Game(_mapLoader) {
 
   this.addPlayer = (data) => {
     // Add new flyer div to stage
-    // eslint-disable-next-line max-len
-    $(stageDiv).append(`<div id="flyer_${data.userid}" class="flyer" ><p style="color:${data.usercolor};">${data.nickname}</p><img id="fist" src="img/hero_fist.png"/><img id="idle" src="img/hero_idle.png"/><img id="fly" src="img/hero_fly.png"/></div>`);
+
+    const htmlString = `<div id="flyer_${data.userid}" class="flyer" >`
+                          + `<p style="color:${data.usercolor};">${data.nickname}</p>`
+                          + '<img id="fist" src="img/hero_fist.png"/>'
+                          + '<img id="idle" src="img/hero_idle.png"/>'
+                          + '<img id="fly" src="img/hero_fly.png"/>'
+                        + '</div>';
+
+    $(stageDiv).append(htmlString);
+
     const flyerDiv = $(`#flyer_${data.userid}`);
 
     // Pop in
@@ -527,7 +540,6 @@ function Game(_mapLoader) {
       color: data.usercolor,
       deadCount: 0,
       score: 0,
-      stunned: false,
       gas: false,
       dir: 1,
       x: startX,
@@ -546,7 +558,8 @@ function Game(_mapLoader) {
 
     // Remove flyer from stage, phaser system, and game loop
     const flyer = lookupFlyer(data.userid);
-    if (flyer !== undefined) {
+
+    if (flyer !== null && flyer !== undefined) {
       // Remove div from html
       $(flyer.div).remove();
 
@@ -580,7 +593,6 @@ function Game(_mapLoader) {
   this.controlTap = (data) => {
     const f = lookupFlyer(data.userid);
     if (f === undefined) return;
-    if (f.stunned) return;
 
     // Swipe action
     TweenLite.set(f.fistDiv, {
@@ -609,9 +621,6 @@ function Game(_mapLoader) {
       }
     }
 
-    // Stun others
-    // var didStun = attemptStun(f);
-
     // Phaser attempt swipe (for bricks)
     flyerBrickSwipe(f);
   };
@@ -623,13 +632,6 @@ function Game(_mapLoader) {
   function gameLoop() {
     // Update game objects here...
     flyers.forEach((flyer) => {
-      if (flyer.stunned === true) {
-        // TODO: Freeze phaser physics object
-
-        // Skip to next flyer
-        return;
-      }
-
       if (flyer.gas === true) {
         flyer.deadCount = 0;
       } else {
@@ -717,48 +719,6 @@ function Game(_mapLoader) {
     return damageDealt;
   }
 
-  function attemptStun(attackingFlyer) {
-    const didStun = false;
-    const stunRadius = 70;
-
-    let of;
-    let oX;
-    let oY;
-
-    for (i = flyers.length - 1; i >= 0; i -= 1) {
-      // Skip attacking flyer and stunned flyers
-      if (flyers[i].userid !== attackingFlyer.userid && flyers[i].stunned === false) {
-        otherFlyer = flyers[i];
-        oX = parseInt(otherFlyer.phaserBody.x, 10);
-        oY = parseInt(otherFlyer.phaserBody.y, 10);
-
-        if (dist(oX, oY, attackingFlyer.x, attackingFlyer.y) < stunRadius) {
-        // Successful stun!
-          otherFlyer.stunned = true;
-          TweenMax.to($(otherFlyer.div), 0.2, {
-            css: { opacity: 0.5 },
-            ease: Power2.easeInOut,
-            repeat: 12,
-            yoyo: true,
-            onComplete: liftStun,
-            onCompleteParams: [otherFlyer],
-          });
-
-          if (stunCallback) {
-            stunCallback.call(undefined, otherFlyer.socketid);
-          }
-        }
-      }
-    }
-
-    return didStun;
-  }
-
-  function liftStun(flyer) {
-    flyer.stunned = false;
-    TweenLite.set($(flyer.div), { css: { opacity: 1 } });
-  }
-
   function startRound() {
     // Hide new-round screen
     $('#new-round').hide();
@@ -788,7 +748,7 @@ function Game(_mapLoader) {
       // Emit win event to top-scorer
       if (winCallback) {
         winCallback.call(undefined, flyers[0].socketid);
-        crownNewWinner(flyers[0]);
+        // crownNewWinner(flyers[0]);
       }
 
       // Emit lose event to every other player
@@ -808,8 +768,10 @@ function Game(_mapLoader) {
       // TEMP (shouldn't reach outside game stage)
       $('#player-list').empty();
       for (let i = 0; i < flyers.length; i += 1) {
-        // eslint-disable-next-line max-len
-        $('#player-list').append($('<li>').html(`<span style="color:${flyers[i].color};">${flyers[i].nickname} </span> &nbsp; ${flyers[i].score}`));
+        const htmlString = `<span style="color:${flyers[i].color};">`
+                          + `${flyers[i].nickname} </span> &nbsp; ${flyers[i].score}`;
+
+        $('#player-list').append($('<li>').html(htmlString));
       }
     }
   }
@@ -818,32 +780,6 @@ function Game(_mapLoader) {
     for (let i = 0; i < flyers.length; i += 1) {
       flyers[i].score = 0;
     }
-  }
-
-  function releasePuff(flyer) {
-    // Add to stage
-    // eslint-disable-next-line max-len
-    const pDiv = $(`<div class="puff-ring" style="color:${flyer.color}; background-color:${flyer.color};"></div>`);
-    $(stageDiv).append(pDiv);
-
-    const p = polarity(flyer.ax);
-    let tX = flyer.phaserBody.x + (p * -12) + 15;
-    let tY = flyer.phaserBody.y + 55;
-
-    // Starting point
-    TweenLite.set($(pDiv), { css: { opacity: 0.35, left: tX, top: tY } });
-
-    tX += Math.random() * 16 - 8;
-    tY += Math.random() * 10 - 5 + 10;
-
-    // Scale and fade
-    TweenLite.to($(pDiv), 0.15, { css: { left: tX, top: tY }, ease: Power3.easeOut });
-    TweenLite.to($(pDiv), 0.2, {
-      css: { opacity: 0.0 },
-      ease: Power3.easeIn,
-      onComplete: removeElement,
-      onCompleteParams: [pDiv],
-    });
   }
 
   function releasePoints(val, col, x, y, dir) {
@@ -856,11 +792,13 @@ function Game(_mapLoader) {
     TweenLite.set($(pDiv), { css: { left: x, top: y, scale: 0.25 } });
 
     // Target point
-    x += Math.random() * 80 - 40 + (dir * 115);
-    y -= 45;
+    let myX = x;
+    let myY = y;
+    myX += Math.random() * 80 - 40 + (dir * 115);
+    myY -= 45;
 
     // Scale and fade
-    TweenLite.to($(pDiv), 0.35, { css: { scale: 1, left: x, top: y }, ease: Power3.easeOut });
+    TweenLite.to($(pDiv), 0.35, { css: { scale: 1, left: myX, top: myY }, ease: Power3.easeOut });
     TweenLite.to($(pDiv), 0.5, {
       css: { opacity: 0 },
       delay: 0.35,
@@ -874,12 +812,10 @@ function Game(_mapLoader) {
     // Add new asteroid to stage
     let astType = '';
     let diam = 0;
-    let healthNum = 1;
     const r = Math.random();
 
     if (r < 0.5) {
       astType = 'c';
-      healthNum = Math.ceil(Math.random() * 3);
       diam = 160;
     } else if (r < 0.85) {
       astType = 'b';
@@ -892,8 +828,11 @@ function Game(_mapLoader) {
       diam = 490;
     }
 
-    // eslint-disable-next-line max-len
-    const aDiv = $(`<div class="asteroid" style=""><img src="img/asteroids/${astType}-asteroid-dark.png"/></div>`);
+    const htmlString = '<div class="asteroid" style="">'
+                        + `<img src="img/asteroids/${astType}-asteroid-dark.png"/>`
+                        + '</div>';
+
+    const aDiv = $(htmlString);
 
     $(stageDiv).append(aDiv);
 
@@ -933,8 +872,7 @@ function Game(_mapLoader) {
     for (let i = 0; i < 5; i += 1) {
       const astNum = Math.ceil(Math.random() * 6);
 
-      // eslint-disable-next-line max-len
-      const aDiv = $(`<div class="asteroid" style=""><img src="img/asteroids/a${astNum}.png"/></div>`);
+      const aDiv = $(`<div class="asteroid"><img src="img/asteroids/a${astNum}.png"/></div>`);
 
       $(stageDiv).append(aDiv);
 
@@ -994,17 +932,9 @@ function Game(_mapLoader) {
     $(el).remove();
   }
 
-  function mapRange(value, low1, high1, low2, high2) {
-    return low2 + (high2 - low2) * (value - low1) / (high1 - low1);
-  }
-
   function dist(x, y, x0, y0) {
     const result = Math.sqrt((x -= x0) * x + (y -= y0) * y);
     return result;
-  }
-
-  function clamp(val, min, max) {
-    return Math.min(Math.max(val, min), max);
   }
 
   function roundToNearest(val, n) {
@@ -1036,15 +966,5 @@ function Game(_mapLoader) {
     const dy = distY - rect.h / 2;
 
     return (dx * dx + dy * dy <= (circle.r * circle.r));
-  }
-
-  function polarity(x) {
-    // Convert to a number
-    x = +x;
-    if (x === 0 || Number.isNaN(x)) {
-      return x;
-    }
-
-    return x > 0 ? 1 : -1;
   }
 }
