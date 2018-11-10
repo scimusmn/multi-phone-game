@@ -53,6 +53,11 @@ $(document).ready(() => {
     socket.emit('controller-event', { type: 'points', socketid });
   }
 
+  function onStun(socketid) {
+    // Emit stunned user's socketid
+    socket.emit('controller-event', { type: 'stun', socketid });
+  }
+
   // Set game bounds on load/resize
   function onWindowSize() {
     const w = (this.window.innerWidth > 0) ? this.window.innerWidth : this.screen.width;
@@ -63,6 +68,5 @@ $(document).ready(() => {
   $(window).bind('load resize', onWindowSize);
 
   game.init($('#stage'));
-
-  game.setCallbacks(onForceDisconnect, onWin, onLose, onPoints);
+  game.setCallbacks(onForceDisconnect, onWin, onLose, onPoints, onStun);
 });

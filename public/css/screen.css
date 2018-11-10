@@ -38,6 +38,7 @@ body {
     padding: 5px 5px 70px 5px;
     z-index: 0;
 }
+
 #game-countdown.show {
     background: black;
     z-index: 9;
@@ -46,8 +47,6 @@ body {
 #join-msg{
     position: fixed;
     text-align: center;
-/*    left: 270px;
-    bottom: 90px;*/
     left: 0px;
     top: 0px;
     font-size: 2.5em;

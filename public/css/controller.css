@@ -33,11 +33,9 @@ h3 {
     z-index: 3;
     font-size: 14px;
     font-family: 'Poppins', monospace;
-    /*letter-spacing: 0.75px;*/
     padding: 10px;
     background: black;
     pointer-events: none;
-
 }
 
 canvas {

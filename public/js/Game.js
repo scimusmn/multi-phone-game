@@ -6,13 +6,13 @@
 
 // eslint-disable-next-line no-unused-vars
 function Game(_mapLoader) {
+  // Game settings
+  const DEBUG_MODE = true;
   const ROUND_DURATION = 40; // 75
   const LOBBY_DURATION = 10; // 35
-
+  const STUNS_ENABLED = true;
   const GAME_STAGE_WIDTH = 1666;
   const GAME_STAGE_HEIGHT = 1080;
-
-  const DEBUG_MODE = true;
 
   const thisRef = this;
   let currentFrameRequest = 0;
@@ -25,6 +25,7 @@ function Game(_mapLoader) {
   let winCallback;
   let loseCallback;
   let pointsCallback;
+  let stunCallback;
 
   /* ================= */
   /* PHASER GAME LAYER */
@@ -383,14 +384,67 @@ function Game(_mapLoader) {
     brickEmitter.explode(5555, Math.round(Math.random() * 2 + 3));
   }
 
-  function phaserLevelReset() {
-    // Revive all killed bricks.
-    /*    for (var i = brickPlatforms.children.length - 1; i >= 0; i--) {
-          var brick = brickPlatforms.children[i];
-          brick.revive();
-          brick.loadTexture('block');
-        } */
+  function attemptStun(attackingFlyer) {
+    let didStun = false;
+    const stunRadius = 70;
+    let otherFlyer;
+    let oX;
+    let oY;
+    let tX;
+    let tY;
+    let stunDist;
+    for (i = flyers.length - 1; i >= 0; i -= 1) {
+      // Skip attacking flyer and stunned flyers
+      if (flyers[i].userid !== attackingFlyer.userid && flyers[i].stunned === false) {
+        otherFlyer = flyers[i];
 
+        oX = parseInt(otherFlyer.phaserBody.x, 10);
+        oY = parseInt(otherFlyer.phaserBody.y, 10);
+        tX = parseInt(attackingFlyer.phaserBody.x, 10);
+        tY = parseInt(attackingFlyer.phaserBody.y, 10);
+
+        stunDist = dist(oX, oY, tX, tY);
+
+        if (stunDist < stunRadius) {
+          // Successful stun!
+          didStun = true;
+
+          // Freeze associated phaser physics obj
+          otherFlyer.stunned = true;
+          otherFlyer.phaserBody.reset(oX, oY);
+          otherFlyer.phaserBody.gravityScale = 0;
+          otherFlyer.phaserSprite.alpha = 0.7;
+          otherFlyer.phaserSprite.animations.paused = true;
+
+          TweenMax.to($(otherFlyer.div), 0.2, {
+            css: { opacity: 0.5 },
+            ease: Power2.easeInOut,
+            repeat: 12,
+            yoyo: true,
+            onComplete: liftStun,
+            onCompleteParams: [otherFlyer],
+          });
+          if (stunCallback) {
+            stunCallback.call(undefined, otherFlyer.socketid);
+          }
+        }
+      }
+    }
+    return didStun;
+  }
+
+  function liftStun(flyer) {
+    flyer.stunned = false;
+
+    // Reapply gravity
+    flyer.phaserBody.gravityScale = 1;
+    flyer.phaserSprite.alpha = 1.0;
+    flyer.phaserSprite.animations.paused = false;
+
+    TweenLite.set($(flyer.div), { css: { opacity: 1 } });
+  }
+
+  function phaserLevelReset() {
     // Generate brick tile pattern.
     createBrickPlatforms();
   }
@@ -418,11 +472,12 @@ function Game(_mapLoader) {
     this.start();
   };
 
-  this.setCallbacks = (forceDisconnect, win, lose, points) => {
+  this.setCallbacks = (forceDisconnect, win, lose, points, stun) => {
     onForceDisconnectCallback = forceDisconnect;
     winCallback = win;
     loseCallback = lose;
     pointsCallback = points;
+    stunCallback = stun;
   };
 
   this.start = () => {
@@ -473,8 +528,6 @@ function Game(_mapLoader) {
   this.stop = () => {
     // Stop game loop
     window.cancelAnimationFrame(currentFrameRequest);
-
-    // TODO: If this ever gets used, stop all timers
   };
 
   this.setBounds = (x, y, w, h) => {
@@ -541,6 +594,7 @@ function Game(_mapLoader) {
       deadCount: 0,
       score: 0,
       gas: false,
+      stunned: false,
       dir: 1,
       x: startX,
       y: startY,
@@ -576,6 +630,7 @@ function Game(_mapLoader) {
   this.controlVector = (data) => {
     const f = lookupFlyer(data.userid);
     if (f === undefined) return;
+    if (f.stunned) return;
 
     if (data.magnitude === 0) {
       // No acceleration
@@ -593,6 +648,7 @@ function Game(_mapLoader) {
   this.controlTap = (data) => {
     const f = lookupFlyer(data.userid);
     if (f === undefined) return;
+    if (f.stunned) return;
 
     // Swipe action
     TweenLite.set(f.fistDiv, {
@@ -619,6 +675,12 @@ function Game(_mapLoader) {
       if (pointsCallback) {
         pointsCallback.call(undefined, f.socketid);
       }
+    }
+
+    // Stun others
+    if (STUNS_ENABLED === true) {
+      const didStun = attemptStun(f);
+      console.log('STUN!', didStun);
     }
 
     // Phaser attempt swipe (for bricks)
