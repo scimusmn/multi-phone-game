@@ -36,6 +36,7 @@ h3 {
     /*letter-spacing: 0.75px;*/
     padding: 10px;
     background: black;
+    pointer-events: none;
 
 }
 
