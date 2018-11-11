@@ -7,7 +7,7 @@
 // eslint-disable-next-line no-unused-vars
 function Game(_mapLoader) {
   // Game settings
-  const DEBUG_MODE = true;
+  const DEBUG_MODE = false;
   const ROUND_DURATION = 9; // 75
   const LOBBY_DURATION = 5; // 35
   const STUNS_ENABLED = true;
@@ -43,7 +43,7 @@ function Game(_mapLoader) {
     },
   );
 
-  /* Phaser variables */
+  // Physics variables
   const flyerSpeedVertical = 30;
   const flyerSpeedHorizontal = 25;
 
@@ -67,17 +67,13 @@ function Game(_mapLoader) {
     // Prevent game from pausing when browser loses focus
     game.stage.disableVisibilityChange = true;
 
-    /* Preload all assets */
-
+    /* Preload game assets */
     game.load.image('block', 'img/sprites/block.png');
     game.load.image('block-damaged', 'img/sprites/block-damaged.png');
     game.load.image('block-damaged-2', 'img/sprites/block-damaged-2.png');
     game.load.image('block-piece', 'img/sprites/block-piece.png');
-
-    game.load.image('debug-block', 'img/sprites/square1.png');
     game.load.image('crown', 'img/sprites/crown.png');
 
-    game.load.atlasJSONHash('ghost', 'img/sprites/ghost.png', 'img/sprites/ghost.json');
     game.load.atlasJSONHash('led', 'img/sprites/led.png', 'img/sprites/led.json');
   }
 
@@ -124,8 +120,8 @@ function Game(_mapLoader) {
     winnerCrown = game.add.sprite(0, 0, 'crown');
     winnerCrown.name = 'crown';
     winnerCrown.anchor.x = 0.5;
-    winnerCrown.anchor.y = 1.8;
-    winnerCrown.scale.setTo(0.15, 0.15);
+    winnerCrown.anchor.y = 2.4;
+    winnerCrown.scale.setTo(0.1, 0.1);
 
     // Prepare particle effects
     brickEmitter = game.add.emitter(0, 0, 100);
@@ -145,6 +141,10 @@ function Game(_mapLoader) {
 
     if (DEBUG_MODE === true) {
       thisRef.addPlayer(debugFlyerData);
+
+      setTimeout(() => {
+        crownWinner(flyers[0]);
+      }, 2000);
     }
   }
 
@@ -243,26 +243,38 @@ function Game(_mapLoader) {
     const fSprite = f.phaserSprite;
     const fInner = f.phaserInner;
 
-
-    if (flyer.ax < 0) {
-      fBody.moveLeft(flyerSpeedHorizontal * Math.abs(flyer.ax));
+    if (f.ax < 0) {
+      fBody.moveLeft(flyerSpeedHorizontal * Math.abs(f.ax));
       fSprite.animations.play('fly');
       fInner.animations.play('fly');
-      // flyer.dir = -1.0;
       f.dir = -1.0;
-      fSprite.scale.setTo(flyer.dir, 1.0);
-      fInner.scale.setTo(-flyer.dir, 1.0);
-    } else if (flyer.ax > 0) {
-      fBody.moveRight(flyerSpeedHorizontal * Math.abs(flyer.ax));
+      fSprite.scale.setTo(f.dir, 1.0);
+      fInner.scale.setTo(-f.dir, 1.0);
+      if (f.crowned === true) {
+        winnerCrown.angle = -40;
+        winnerCrown.anchor.x = 1.0;
+        winnerCrown.anchor.y = 3.2;
+      }
+    } else if (f.ax > 0) {
+      fBody.moveRight(flyerSpeedHorizontal * Math.abs(f.ax));
       fSprite.animations.play('fly');
       fInner.animations.play('fly');
-      // flyer.dir = 1.0;
       f.dir = 1.0;
-      fSprite.scale.setTo(flyer.dir, 1.0);
-      fInner.scale.setTo(-flyer.dir, 1.0);
+      fSprite.scale.setTo(f.dir, 1.0);
+      fInner.scale.setTo(-f.dir, 1.0);
+      if (f.crowned === true) {
+        winnerCrown.angle = 40;
+        winnerCrown.anchor.x = 0.0;
+        winnerCrown.anchor.y = 3.2;
+      }
     } else {
       fSprite.animations.play('idle');
       fInner.animations.play('idle');
+      if (f.crowned === true) {
+        winnerCrown.angle = 0;
+        winnerCrown.anchor.x = 0.5;
+        winnerCrown.anchor.y = 2.9;
+      }
     }
 
     if (flyer.ay < 0) {
@@ -276,38 +288,52 @@ function Game(_mapLoader) {
     if (flyers.length === 0) return;
 
     const f = flyer;
-    const fBody = f.phaserBody;
-    const fSprite = f.phaserSprite;
+    f.gas = false;
 
     if (cursors.left.isDown) {
-      fBody.moveLeft(flyerSpeedHorizontal);
-      fSprite.animations.play('fly');
-      f.dir = -1.0;
-      fSprite.scale.setTo(flyer.dir, 1.0);
+      // Mimic leftward phone input
+      f.gas = true;
+      f.ax = -flyerSpeedHorizontal * 0.025;
     } else if (cursors.right.isDown) {
-      fBody.moveRight(flyerSpeedHorizontal);
-      fSprite.animations.play('fly');
-      f.dir = 1.0;
-      fSprite.scale.setTo(flyer.dir, 1.0);
+      // Mimic rightward phone input
+      f.gas = true;
+      f.ax = flyerSpeedHorizontal * 0.025;
     } else {
-      fSprite.animations.play('idle');
+      // Mimic no phone input
+      f.ax = 0.0;
     }
 
     if (cursors.up.isDown) {
-      fBody.moveUp(flyerSpeedVertical);
+      // Mimic upward phone input
+      f.gas = true;
+      f.ay = -flyerSpeedVertical * 0.025;
     } else if (cursors.down.isDown) {
-      fBody.moveDown(flyerSpeedVertical);
+      // Mimic downward phone input
+      f.gas = true;
+      f.ay = flyerSpeedVertical * 0.025;
+    } else {
+      // Mimic no phone input
+      f.ay = 0.0;
     }
   }
 
   function crownWinner(flyer) {
-    console.log('crownWinner');
+    console.log('crownWinner', flyer);
 
     // If not already wearing crown, add.
     // if (flyer.phaserBody.sprite.children.indexOf(winnerCrown) === -1) {
     // sprite is a part of groupA
-    flyer.phaserBody.sprite.addChild(winnerCrown);
+    // flyer.phaserBody.sprite.addChild(winnerCrown);
     // }
+
+    for (let i = 0; i < flyers.length; i += 1) {
+      if (flyer === flyers[i]) {
+        flyers[i].crowned = true;
+        flyers[i].phaserBody.sprite.addChild(winnerCrown);
+      } else {
+        flyers[i].crowned = false;
+      }
+    }
   }
 
   function flyerBrickSwipe(f) {
@@ -363,7 +389,6 @@ function Game(_mapLoader) {
       // gameplay with 'revive'
 
       if (roundCountdown > 0) {
-        
         // Increment player points
         flyer.score += POINTS_PER_BRICK;
 
@@ -603,6 +628,7 @@ function Game(_mapLoader) {
       score: 0,
       gas: false,
       stunned: false,
+      crowned: false,
       dir: 1,
       x: startX,
       y: startY,
@@ -837,12 +863,17 @@ function Game(_mapLoader) {
     flyers.sort((a, b) => parseFloat(b.score) - parseFloat(a.score));
 
     if (roundCountdown < 0) {
-      // TEMP (shouldn't reach outside game stage)
+      // TEMP (shouldn't reach outside game stage.
+      // Should be passed in through variable)
       $('#player-list').empty();
       for (let i = 0; i < flyers.length; i += 1) {
-        const htmlString = `<span style="color:${flyers[i].color};">`
+        let htmlString = `<span style="color:${flyers[i].color};">`
                           + `${flyers[i].nickname} </span> &nbsp; ${flyers[i].score}`;
 
+        // Include crown icon for first place
+        if (i === 0) {
+          htmlString += ' &nbsp;  &nbsp;<img width="40px" src="img/sprites/crown.png"/>';
+        }
         $('#player-list').append($('<li>').html(htmlString));
       }
     }

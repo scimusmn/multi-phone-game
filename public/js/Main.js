@@ -21,7 +21,6 @@ $(document).ready(() => {
   });
 
   socket.on('remove-player', (data) => {
-    console.log('socket says remove player?');
     game.removePlayer(data);
   });
 

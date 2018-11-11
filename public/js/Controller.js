@@ -44,7 +44,7 @@ $(document).ready(() => {
     touchControl.enable();
 
     // Uncomment for simulations
-    // touchControl.simulateUserInput();
+    touchControl.simulateUserInput();
   }
 
   /**
