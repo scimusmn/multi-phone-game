@@ -167,7 +167,7 @@ function Game(_mapLoader) {
 
     // Add holy beams of light
     // For crowning sequence
-    const beamCount = 15;
+    const beamCount = 9;
     for (let i = 0; i < beamCount; i += 1) {
       const beam = game.add.sprite(0, -9999, 'block-fade');
       beam.name = `light-beam${i}`;
