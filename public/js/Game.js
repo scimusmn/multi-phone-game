@@ -167,12 +167,12 @@ function Game(_mapLoader) {
 
     // Add holy beams of light
     // For crowning sequence
-    const beamCount = 20;
+    const beamCount = 15;
     for (let i = 0; i < beamCount; i += 1) {
       const beam = game.add.sprite(0, -9999, 'block-fade');
       beam.name = `light-beam${i}`;
-      beam.scale.setTo(Math.random() * 0.03 + 0.03, 40);
-      beam.alpha = 0.8;
+      beam.scale.setTo(Math.random() * 0.02 + 0.02, 40);
+      beam.alpha = 0.2;
       beam.anchor.y = 0.98 + (Math.random() * 0.02);
       beam.anchor.x = Math.random() * 1.0;
 
@@ -182,7 +182,7 @@ function Game(_mapLoader) {
         beam.alpha = 0.8;
       } else {
         beam.tint = 0xFBEF93;
-        beam.angle = Math.random() * 360 - 180;
+        beam.angle = Math.random() * 2 - 1;
       }
 
       crownLightBeams.push(beam);
@@ -361,7 +361,6 @@ function Game(_mapLoader) {
       let beam;
       for (let i = 0; i < crownLightBeams.length; i += 1) {
         beam = crownLightBeams[i];
-        beam.visible = true;
         beam.y = f.phaserBody.y - 15.0;
 
         if (i > 0) {
@@ -369,7 +368,7 @@ function Game(_mapLoader) {
           const sinSpeed = 0.85;
           const sinRange = 16.0;
           beam.x = f.phaserBody.x + Math.sin((crowningOffset * sinSpeed) + (i * 9)) * sinRange;
-          beam.angle += 0.1;
+          // beam.angle += 0.1;
         } else {
           beam.x = f.phaserBody.x;
         }
@@ -438,8 +437,14 @@ function Game(_mapLoader) {
       if (flyer === flyers[i]) {
         flyers[i].crowned = true;
         flyers[i].phaserBody.sprite.addChild(winnerCrown);
+
         const userColor = parseInt(flyers[i].color.replace(/^#/, ''), 16);
         crownLightBeams[0].tint = userColor;
+
+        // Show beams of light
+        for (let i = 0; i < crownLightBeams.length; i += 1) {
+          crownLightBeams[i].visible = true;
+        }
       } else {
         flyers[i].crowned = false;
       }
