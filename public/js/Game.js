@@ -7,11 +7,11 @@
 // eslint-disable-next-line no-unused-vars
 function Game(_mapLoader) {
   // Game settings
-  const DEBUG_MODE = false;
-  const ROUND_DURATION = 9; // 75
-  const LOBBY_DURATION = 5; // 35
-  const STUNS_ENABLED = true;
-  const CROWNS_ENABLED = true;
+  const DEBUG_MODE = true;
+  const ROUND_DURATION = 20; // 75
+  const LOBBY_DURATION = 15; // 35
+  const STUNS_ENABLED = true; // Allow players to stun eachother
+  const CROWNS_ENABLED = true; // Crown the winner of each round (dramatic)
   const POINTS_PER_BRICK = 10;
   const GAME_STAGE_WIDTH = 1666;
   const GAME_STAGE_HEIGHT = 1080;
@@ -23,15 +23,19 @@ function Game(_mapLoader) {
   let stageDiv = {};
   let stageBounds = {};
   let roundCountdown = -LOBBY_DURATION;
+
+  // Callback methods
   let onForceDisconnectCallback;
   let winCallback;
   let loseCallback;
   let pointsCallback;
   let stunCallback;
 
-  /* ================= */
-  /* PHASER GAME LAYER */
-  /* ================= */
+  /**
+   * ==================
+   * Physics Game Layer
+   * ==================
+   */
   const game = new Phaser.Game(
     GAME_STAGE_WIDTH,
     GAME_STAGE_HEIGHT,
@@ -47,6 +51,8 @@ function Game(_mapLoader) {
   const flyerSpeedVertical = 30;
   const flyerSpeedHorizontal = 25;
 
+  // Fake user data for
+  // quicker debugging.
   const debugFlyerData = {
     userid: 'debug-user-id12345',
     usercolor: '#FD6E83',
@@ -58,6 +64,8 @@ function Game(_mapLoader) {
   let brickPlatforms;
   let allFlyersGroup;
   let winnerCrown;
+  let crowningOffset;
+  const crownLightBeams = [];
 
   let brickEmitter;
 
@@ -69,6 +77,7 @@ function Game(_mapLoader) {
 
     /* Preload game assets */
     game.load.image('block', 'img/sprites/block.png');
+    game.load.image('block-fade', 'img/sprites/block-fade.png');
     game.load.image('block-damaged', 'img/sprites/block-damaged.png');
     game.load.image('block-damaged-2', 'img/sprites/block-damaged-2.png');
     game.load.image('block-piece', 'img/sprites/block-piece.png');
@@ -117,11 +126,9 @@ function Game(_mapLoader) {
       thisRef.controlTap(debugFlyerData);
     }, this);
 
-    winnerCrown = game.add.sprite(0, 0, 'crown');
-    winnerCrown.name = 'crown';
-    winnerCrown.anchor.x = 0.5;
-    winnerCrown.anchor.y = 2.4;
-    winnerCrown.scale.setTo(0.1, 0.1);
+    if (CROWNS_ENABLED === true) {
+      setupCrownDisplays();
+    }
 
     // Prepare particle effects
     brickEmitter = game.add.emitter(0, 0, 100);
@@ -142,9 +149,43 @@ function Game(_mapLoader) {
     if (DEBUG_MODE === true) {
       thisRef.addPlayer(debugFlyerData);
 
-      setTimeout(() => {
-        crownWinner(flyers[0]);
-      }, 2000);
+      if (CROWNS_ENABLED === true) {
+        setTimeout(() => {
+          crownWinner(flyers[0]);
+        }, 2000);
+      }
+    }
+  }
+
+  function setupCrownDisplays() {
+    // Add crown sprite to game
+    winnerCrown = game.add.sprite(0, 0, 'crown');
+    winnerCrown.name = 'crown';
+    winnerCrown.anchor.x = 0.5;
+    winnerCrown.anchor.y = 2.4;
+    winnerCrown.scale.setTo(0.1, 0.1);
+
+    // Add holy beams of light
+    // For crowning sequence
+    const beamCount = 20;
+    for (let i = 0; i < beamCount; i += 1) {
+      const beam = game.add.sprite(0, -9999, 'block-fade');
+      beam.name = `light-beam${i}`;
+      beam.scale.setTo(Math.random() * 0.03 + 0.03, 40);
+      beam.alpha = 0.8;
+      beam.anchor.y = 0.98 + (Math.random() * 0.02);
+      beam.anchor.x = Math.random() * 1.0;
+
+      if (i === 0) {
+        beam.anchor.x = 0.5;
+        beam.scale.setTo(0.21, 50);
+        beam.alpha = 0.8;
+      } else {
+        beam.tint = 0xFBEF93;
+        beam.angle = Math.random() * 360 - 180;
+      }
+
+      crownLightBeams.push(beam);
     }
   }
 
@@ -277,10 +318,75 @@ function Game(_mapLoader) {
       }
     }
 
+    // Update crown display
+    // for winning flyer
+    if (CROWNS_ENABLED === true
+        && f.crowned === true) {
+      updateCrown(f);
+    }
+
     if (flyer.ay < 0) {
       fBody.moveUp(flyerSpeedVertical * Math.abs(flyer.ay));
     } else if (flyer.ay > 0) {
       fBody.moveDown(flyerSpeedVertical * Math.abs(flyer.ay));
+    }
+  }
+
+  function updateCrown(f) {
+    if (f.ax < 0) {
+      winnerCrown.angle = -40;
+      winnerCrown.anchor.x = 1.0;
+      winnerCrown.anchor.y = 3.2;
+    } else if (f.ax > 0) {
+      winnerCrown.angle = 40;
+      winnerCrown.anchor.x = 0.0;
+      winnerCrown.anchor.y = 3.2;
+    } else {
+      winnerCrown.angle = 0;
+      winnerCrown.anchor.x = 0.5;
+      winnerCrown.anchor.y = 2.9;
+    }
+
+    // Crown new winner animation
+    if (roundCountdown < 0 && crowningOffset !== -1.0) {
+      winnerCrown.angle = 0;
+      winnerCrown.anchor.x = 0.5;
+
+      const mappedScale = mapRange(crowningOffset, 2.9, 20.0, 0.14, 0.35);
+      winnerCrown.scale.setTo(mappedScale, mappedScale);
+
+      winnerCrown.anchor.y = crowningOffset;
+
+      // Animate beams of light
+      let beam;
+      for (let i = 0; i < crownLightBeams.length; i += 1) {
+        beam = crownLightBeams[i];
+        beam.visible = true;
+        beam.y = f.phaserBody.y - 15.0;
+
+        if (i > 0) {
+          // TODO: make these constants
+          const sinSpeed = 0.85;
+          const sinRange = 16.0;
+          beam.x = f.phaserBody.x + Math.sin((crowningOffset * sinSpeed) + (i * 9)) * sinRange;
+          beam.angle += 0.1;
+        } else {
+          beam.x = f.phaserBody.x;
+        }
+      }
+
+      // Drop crown down from sky
+      if (crowningOffset > 2.9) {
+        crowningOffset -= 0.035;
+      } else {
+        // Crowning complete, hide beams
+        crowningOffset = -1.0;
+        winnerCrown.scale.setTo(0.1, 0.1);
+        for (let i = 0; i < crownLightBeams.length; i += 1) {
+          beam = crownLightBeams[i];
+          beam.visible = false;
+        }
+      }
     }
   }
 
@@ -318,18 +424,22 @@ function Game(_mapLoader) {
   }
 
   function crownWinner(flyer) {
-    console.log('crownWinner', flyer);
-
     // If not already wearing crown, add.
     // if (flyer.phaserBody.sprite.children.indexOf(winnerCrown) === -1) {
     // sprite is a part of groupA
     // flyer.phaserBody.sprite.addChild(winnerCrown);
     // }
 
+    // Start with large offset for
+    // holy knighting onto character
+    crowningOffset = 20.0;
+
     for (let i = 0; i < flyers.length; i += 1) {
       if (flyer === flyers[i]) {
         flyers[i].crowned = true;
         flyers[i].phaserBody.sprite.addChild(winnerCrown);
+        const userColor = parseInt(flyers[i].color.replace(/^#/, ''), 16);
+        crownLightBeams[0].tint = userColor;
       } else {
         flyers[i].crowned = false;
       }
@@ -446,7 +556,7 @@ function Game(_mapLoader) {
           otherFlyer.stunned = true;
           otherFlyer.phaserBody.reset(oX, oY);
           otherFlyer.phaserBody.gravityScale = 0;
-          otherFlyer.phaserSprite.alpha = 0.7;
+          otherFlyer.phaserSprite.alpha = 0.5;
           otherFlyer.phaserSprite.animations.paused = true;
 
           TweenMax.to($(otherFlyer.div), 0.2, {
@@ -489,16 +599,17 @@ function Game(_mapLoader) {
       if (flyers.length > 0) {
         game.debug.body(flyers[0].phaserBody.sprite, '#F00', false);
         game.debug.spriteBounds(flyers[0].phaserBody.sprite.getChildAt(1), '#0FF', false);
-
-        // game.debug.spriteBounds(flyers[0].phaserBody.sprite.getChildAt(0), '#F0F', false);
         game.debug.body(flyers[0].phaserBody.sprite.getChildAt(0), '#F0F', false);
       }
     }
   }
 
-  /* ============== */
-  /* PUBLIC METHODS */
-  /* ============== */
+
+  /**
+   * ==============
+   * Public Methods
+   * ==============
+   */
 
   this.init = (_stageDiv) => {
     stageDiv = _stageDiv;
@@ -839,7 +950,7 @@ function Game(_mapLoader) {
     updateScoreboard();
     $('#game-countdown').text(' ');
 
-    if (flyers.length > 1) {
+    if (flyers.length > 0) {
       // Emit win event to top-scorer
       if (winCallback) {
         winCallback.call(undefined, flyers[0].socketid);
@@ -871,8 +982,8 @@ function Game(_mapLoader) {
                           + `${flyers[i].nickname} </span> &nbsp; ${flyers[i].score}`;
 
         // Include crown icon for first place
-        if (i === 0) {
-          htmlString += ' &nbsp;  &nbsp;<img width="40px" src="img/sprites/crown.png"/>';
+        if (CROWNS_ENABLED === true && i === 0) {
+          htmlString += ' &nbsp;  <img width="40px" src="img/sprites/crown.png"/>';
         }
         $('#player-list').append($('<li>').html(htmlString));
       }
@@ -1038,6 +1149,10 @@ function Game(_mapLoader) {
   function dist(x, y, x0, y0) {
     const result = Math.sqrt((x -= x0) * x + (y -= y0) * y);
     return result;
+  }
+
+  function mapRange(value, low1, high1, low2, high2) {
+    return low2 + (high2 - low2) * (value - low1) / (high1 - low1);
   }
 
   function roundToNearest(val, n) {
