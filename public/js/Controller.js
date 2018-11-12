@@ -6,12 +6,17 @@
 $(document).ready(() => {
   const socket = io.connect('', { path: '/socket.io' });
 
+  // Check url params for 'simulateInput'
+  // Will enable simulation of random user input
+  const params = new URLSearchParams(window.location.search);
+  const simulateInput = params.has('simulateInput');
+
   /**
-      * Check if this device allows
-      * Local Storage, which will
-      * error out in incognito mode when
-      * you attempt to use.
-      */
+   * Check if this device allows
+   * Local Storage, which will
+   * error out in incognito mode when
+   * you attempt to use.
+   */
   function localStorageAvailable() {
     const test = 'test';
     try {
@@ -22,6 +27,7 @@ $(document).ready(() => {
       return false;
     }
   }
+
   if (localStorageAvailable() === false) {
     $('body').empty();
     $('body').append('<h1><br/>Unable to connect.</h1><br/>');
@@ -44,16 +50,17 @@ $(document).ready(() => {
     touchControl.enable();
 
     // Uncomment for simulations
-    touchControl.simulateUserInput();
+    if (simulateInput === true) {
+      touchControl.simulateUserInput();
+    }
   }
 
   /**
-      * Check for previously stored
-      * data to determine whether
-      * this is a first-time or
-      * returning user.
-      */
-
+   * Check for previously stored
+   * data to determine whether
+   * this is a first-time or
+   * returning user.
+   */
   function register(data) {
     const newData = data;
     newData.usertype = 'client_controller';
@@ -100,13 +107,13 @@ $(document).ready(() => {
 
 
   /**
-      * Due to mobile limitations,
-      * we must instantiate our
-      * sounds in a user-triggered
-      * function. Important: The
-      * 'buffer' parameter must
-      * be set to true for mobile.
-      */
+   * Due to mobile limitations,
+   * we must instantiate our
+   * sounds in a user-triggered
+   * function. Important: The
+   * 'buffer' parameter must
+   * be set to true for mobile.
+   */
   let soundPlayer;
 
   function initSounds() {
@@ -140,8 +147,8 @@ $(document).ready(() => {
 
 
   /**
-      * Listen for useful socket.io events
-      */
+   * Listen for useful socket.io events
+   */
   socket.on('disconnect', (reason) => {
     console.log('Disconnect. reason:', reason);
 
@@ -166,21 +173,21 @@ $(document).ready(() => {
   });
 
   /**
-      * Generalized message reciever
-      * to display full screen alerts
-      */
+   * Generalized message reciever
+   * to display full screen alerts
+   */
   socket.on('alert-message', (data) => {
     console.log('alert-message recieved:', data);
     displayMessageToUser(data.message);
   });
 
   /**
-      * Listen for instruction from
-      * node to store new or updated
-      * user data, specific to this
-      * device. e.g., unique ids,
-      * scores, customizations...
-      */
+   * Listen for instruction from
+   * node to store new or updated
+   * user data, specific to this
+   * device. e.g., unique ids,
+   * scores, customizations...
+   */
   socket.on('store-local-data', (data) => {
     if (typeof window.localStorage !== 'undefined') {
       localStorage.setItem(data.key, data.dataString);
@@ -190,12 +197,12 @@ $(document).ready(() => {
   });
 
   /**
-      * Listen for events targeted
-      * specically at this controller
-      * from the game. Useful for
-      * triggering sfx, game-states,
-      * alerts, secrets, high-score, etc.
-      */
+   * Listen for events targeted
+   * specically at this controller
+   * from the game. Useful for
+   * triggering sfx, game-states,
+   * alerts, secrets, high-score, etc.
+   */
   socket.on('controller-event', (data) => {
     if (data.type === 'stun') {
       playSound('stun');
@@ -218,11 +225,11 @@ $(document).ready(() => {
   });
 
   /**
-      * Watch for change in page focus.
-      * This should catch if a user
-      * opens a new tab, then we
-      * disconnect them.
-      */
+   * Watch for change in page focus.
+   * This should catch if a user
+   * opens a new tab, then we
+   * disconnect them.
+   */
   Visibility.change((e, state) => {
     console.log('Visibility change', state);
     if (Visibility.hidden()) {
