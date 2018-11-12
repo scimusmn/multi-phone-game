@@ -6,12 +6,23 @@
 
 // eslint-disable-next-line no-unused-vars
 function Game(_mapLoader) {
-  // Game settings
+  /**
+   * =============
+   * Game Settings
+   * =============
+   */
   const DEBUG_MODE = true;
-  const ROUND_DURATION = 20; // 75
-  const LOBBY_DURATION = 15; // 35
-  const STUNS_ENABLED = true; // Allow players to stun eachother
-  const CROWNS_ENABLED = true; // Crown the winner of each round (dramatic)
+  // Duration of gameplay rounds in seconds
+  const ROUND_DURATION = 30;
+
+  // Duration between rounds in seconds
+  const LOBBY_DURATION = 15;
+
+  // Allow players to stun eachother
+  const STUNS_ENABLED = true;
+
+  // Crown the winner of each round (dramatic)
+  const CROWNS_ENABLED = true;
   const POINTS_PER_BRICK = 10;
   const GAME_STAGE_WIDTH = 1666;
   const GAME_STAGE_HEIGHT = 1080;
@@ -24,7 +35,7 @@ function Game(_mapLoader) {
   let stageBounds = {};
   let roundCountdown = -LOBBY_DURATION;
 
-  // Callback methods
+  // Callback methods usded
   let onForceDisconnectCallback;
   let winCallback;
   let loseCallback;
@@ -36,6 +47,7 @@ function Game(_mapLoader) {
    * Physics Game Layer
    * ==================
    */
+  // Initialize Phaser game engine
   const game = new Phaser.Game(
     GAME_STAGE_WIDTH,
     GAME_STAGE_HEIGHT,
@@ -60,22 +72,22 @@ function Game(_mapLoader) {
     socketid: 'debug-socket-id-abc',
   };
 
-  let cursors;
+  // Keyboard references
+  let cursorKeys;
+
+  // Display objects and groups
   let brickPlatforms;
   let allFlyersGroup;
   let winnerCrown;
   let crowningOffset;
   const crownLightBeams = [];
-
   let brickEmitter;
 
   function phaserPreload() {
-    /* Phaser game settings */
-
     // Prevent game from pausing when browser loses focus
     game.stage.disableVisibilityChange = true;
 
-    /* Preload game assets */
+    // Preload game assets
     game.load.image('block', 'img/sprites/block.png');
     game.load.image('block-fade', 'img/sprites/block-fade.png');
     game.load.image('block-damaged', 'img/sprites/block-damaged.png');
@@ -83,6 +95,7 @@ function Game(_mapLoader) {
     game.load.image('block-piece', 'img/sprites/block-piece.png');
     game.load.image('crown', 'img/sprites/crown.png');
 
+    // Load LED spritesheet and config
     game.load.atlasJSONHash('led', 'img/sprites/led.png', 'img/sprites/led.json');
   }
 
@@ -91,21 +104,26 @@ function Game(_mapLoader) {
   }
 
   function createBrickPlatforms() {
+    // Clear previous map's bricks if necessary
     if (brickPlatforms) {
       clearAllBricks();
     } else {
+      // Add brick parent group if first map
       brickPlatforms = game.add.group();
     }
 
+    // Retrieve array of all brick objects
     const brickRects = _mapLoader.getRandomBrickMap();
 
     for (let i = 0; i < brickRects.length; i += 1) {
       const br = brickRects[i];
 
+      // Add to Phaser display engine
       const platform = brickPlatforms.create(br.x, br.y, 'block');
       platform.width = br.w;
       platform.height = br.h;
 
+      // Add to Phaser physics engine
       game.physics.ninja.enable(platform, 3);
       platform.body.immovable = true;
       platform.body.gravityScale = 0;
@@ -120,7 +138,7 @@ function Game(_mapLoader) {
     game.physics.ninja.gravity = 0.07;
 
     // Keyboard for debug
-    cursors = game.input.keyboard.createCursorKeys();
+    cursorKeys = game.input.keyboard.createCursorKeys();
     spaceButton = game.input.keyboard.addKey(Phaser.Keyboard.SPACEBAR);
     spaceButton.onDown.add(() => {
       thisRef.controlTap(debugFlyerData);
@@ -166,20 +184,20 @@ function Game(_mapLoader) {
     winnerCrown.scale.setTo(0.1, 0.1);
 
     // Add holy beams of light
-    // For crowning sequence
-    const beamCount = 9;
+    // for crowning sequence
+    const beamCount = 11;
     for (let i = 0; i < beamCount; i += 1) {
       const beam = game.add.sprite(0, -9999, 'block-fade');
       beam.name = `light-beam${i}`;
       beam.scale.setTo(Math.random() * 0.02 + 0.02, 40);
-      beam.alpha = 0.2;
+      beam.alpha = 0.25;
       beam.anchor.y = 0.98 + (Math.random() * 0.02);
       beam.anchor.x = Math.random() * 1.0;
 
       if (i === 0) {
         beam.anchor.x = 0.5;
         beam.scale.setTo(0.21, 50);
-        beam.alpha = 0.8;
+        beam.alpha = 0.85;
       } else {
         beam.tint = 0xFBEF93;
         beam.angle = Math.random() * 2 - 1;
@@ -265,9 +283,6 @@ function Game(_mapLoader) {
   function phaserUpdate() {
     // Collisions between flyers and brick platforms
     game.physics.ninja.collide(allFlyersGroup, brickPlatforms);
-
-    // Brick pieces... (not working)
-    // game.physics.ninja.collide(brickEmitter, brickPlatforms);
 
     for (let i = 0; i < flyers.length; i += 1) {
       controllerInput(flyers[i]);
@@ -395,11 +410,11 @@ function Game(_mapLoader) {
     const f = flyer;
     f.gas = false;
 
-    if (cursors.left.isDown) {
+    if (cursorKeys.left.isDown) {
       // Mimic leftward phone input
       f.gas = true;
       f.ax = -flyerSpeedHorizontal * 0.025;
-    } else if (cursors.right.isDown) {
+    } else if (cursorKeys.right.isDown) {
       // Mimic rightward phone input
       f.gas = true;
       f.ax = flyerSpeedHorizontal * 0.025;
@@ -408,11 +423,11 @@ function Game(_mapLoader) {
       f.ax = 0.0;
     }
 
-    if (cursors.up.isDown) {
+    if (cursorKeys.up.isDown) {
       // Mimic upward phone input
       f.gas = true;
       f.ay = -flyerSpeedVertical * 0.025;
-    } else if (cursors.down.isDown) {
+    } else if (cursorKeys.down.isDown) {
       // Mimic downward phone input
       f.gas = true;
       f.ay = flyerSpeedVertical * 0.025;
@@ -423,12 +438,6 @@ function Game(_mapLoader) {
   }
 
   function crownWinner(flyer) {
-    // If not already wearing crown, add.
-    // if (flyer.phaserBody.sprite.children.indexOf(winnerCrown) === -1) {
-    // sprite is a part of groupA
-    // flyer.phaserBody.sprite.addChild(winnerCrown);
-    // }
-
     // Start with large offset for
     // holy knighting onto character
     crowningOffset = 20.0;
@@ -442,8 +451,8 @@ function Game(_mapLoader) {
         crownLightBeams[0].tint = userColor;
 
         // Show beams of light
-        for (let i = 0; i < crownLightBeams.length; i += 1) {
-          crownLightBeams[i].visible = true;
+        for (let l = 0; l < crownLightBeams.length; l += 1) {
+          crownLightBeams[l].visible = true;
         }
       } else {
         flyers[i].crowned = false;
@@ -497,7 +506,7 @@ function Game(_mapLoader) {
     } else {
       brick.kill();
 
-      // TODO - If we don't plan to
+      // TODO: If we don't plan to
       // turn this brick back 'on'
       // we should destroy, not kill.
       // Otherwise, bring back into
@@ -511,24 +520,20 @@ function Game(_mapLoader) {
         releasePoints(POINTS_PER_BRICK, flyer.color, brick.x, brick.y - 15, flyer.dir);
       }
 
+      // Release shattered bricks
       particleBrickBurst(brick.x, brick.y, flyer.dir);
     }
   }
 
   function particleBrickBurst(x, y, dir) {
-    //  Position the emitter where the event was
+    // Position the emitter where event occurred
     brickEmitter.x = x;
     brickEmitter.y = y;
 
+    // Randomize initial particle x velocities
     brickEmitter.setXSpeed(20 * dir, 400 * dir);
 
-    //  First parameter sets effect to "explode" which means all particles are emitted at once
-    //  The second gives each particle a 2000ms lifespan
-    //  The third is ignored when using burst/explode mode
-    //  The final parameter (10) is how many particles will be emitted in this single burst
-
-    // brickEmitter.start(true, 5500, null, 10);
-
+    // Release all particles at once
     brickEmitter.explode(5555, Math.round(Math.random() * 2 + 3));
   }
 
@@ -581,6 +586,7 @@ function Game(_mapLoader) {
     return didStun;
   }
 
+  // Give control back to stunned player
   function liftStun(flyer) {
     flyer.stunned = false;
 
@@ -615,7 +621,6 @@ function Game(_mapLoader) {
    * Public Methods
    * ==============
    */
-
   this.init = (_stageDiv) => {
     stageDiv = _stageDiv;
     this.start();
@@ -690,7 +695,6 @@ function Game(_mapLoader) {
 
   this.addPlayer = (data) => {
     // Add new flyer div to stage
-
     const htmlString = `<div id="flyer_${data.userid}" class="flyer" >`
                           + `<p style="color:${data.usercolor};">${data.nickname}</p>`
                           + '<img id="fist" src="img/hero_fist.png"/>'
@@ -895,7 +899,6 @@ function Game(_mapLoader) {
 
       if (dist(aL, aT, mineX, mineY) < ast.diam * 1.15) {
         // Successful strike
-
         if (ast.diam < 200) {
           // Normal asteroid requires one hit
           damageDealt = ast.health;
@@ -1060,9 +1063,6 @@ function Game(_mapLoader) {
     diam *= scale;
 
     // Release point
-    // var startX = Math.random() * (stageBounds.right - 60) + 30;
-    // var startY = Math.random() * (stageBounds.floor - 60) + 30;
-
     const startX = Math.random() * (game.width - 160) + 30;
     const startY = Math.random() * (stageBounds.floor - 60) + 30;
 
@@ -1135,11 +1135,10 @@ function Game(_mapLoader) {
   }
 
   /**
-   *
+   * ===============
    * Utility Methods
-   *
+   * ===============
    */
-
   function lookupFlyer(id) {
     for (let i = 0; i < flyers.length; i += 1) {
       if (flyers[i].userid === id) return flyers[i];
