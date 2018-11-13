@@ -11,6 +11,10 @@ $(document).ready(() => {
   const params = new URLSearchParams(window.location.search);
   const simulateInput = params.has('simulateInput');
 
+  // If name is provided as url param,
+  // skip asking for name input.
+  const prefillName = params.get('prefillName');
+
   /**
    * Check if this device allows
    * Local Storage, which will
@@ -71,7 +75,10 @@ $(document).ready(() => {
   }
 
   function promptReturnUser(data) {
-    const nickname = prompt('Welcome back!\nEnter your nickname.', '');
+    let nickname = prefillName;
+    if (nickname === null) {
+      nickname = prompt('Welcome back!\nEnter your nickname.', '');
+    }
     const newData = data;
     newData.nickname = sanitize(nickname);
     newData.firstTime = false;
@@ -79,9 +86,13 @@ $(document).ready(() => {
   }
 
   function promptFirstTimer() {
-    const msg = 'Enter your nickname. Touch and drag to move. Tap screen to perform action.';
-    const nickname = prompt(msg, '');
-    nickame = sanitize(nickname);
+    let nickname = prefillName;
+    if (nickname === null) {
+      const msg = 'Enter your nickname. Touch and drag to move. Tap screen to perform action.';
+      nickname = prompt(msg, '');
+      nickame = sanitize(nickname);
+    }
+
     const data = { nickname };
     data.firstTime = true;
     register(data);
