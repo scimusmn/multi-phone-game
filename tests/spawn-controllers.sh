@@ -4,12 +4,12 @@
 
 # TODO: Open different browsers (chrome, safari, and firefox)  
 
-# TODO: At randomized intervals, this script could also close specific browser windows, and open others
+# TODO: At randomized intervals, close random windows and open others
 
 CONTROLLER_URL="http://localhost:3000/?simulateInput=true"
 
 # Spawns single controller by default, 
-# but takes first command flag ( e.g. $bash simulate-controllers.sh 20 )
+# or takes first command flag ( e.g. $bash simulate-controllers.sh 20 )
 SPAWN_COUNT=${1:-1}
 
 for ((i=1; i<=SPAWN_COUNT; i++)); 
