@@ -13,7 +13,7 @@ function Game(_mapLoader) {
    */
   // Add keyboard controllable character
   // Show in-game visual feedback
-  const DEBUG_MODE = false;
+  const DEBUG_MODE = true;
 
   // Duration of gameplay rounds in seconds
   const ROUND_DURATION = 25;
@@ -25,7 +25,7 @@ function Game(_mapLoader) {
   const STUNS_ENABLED = true;
 
   // Crown the winner of each round (dramatic)
-  const CROWNS_ENABLED = true;
+  const CROWNS_ENABLED = false;
   const POINTS_PER_BRICK = 10;
   const GAME_STAGE_WIDTH = 1666;
   const GAME_STAGE_HEIGHT = 1080;
@@ -392,10 +392,14 @@ function Game(_mapLoader) {
 
         if (i > 0) {
           // TODO: make these constants
-          const sinSpeed = 0.85;
-          const sinRange = 16.0;
-          beam.x = f.phaserBody.x + Math.sin((crowningOffset * sinSpeed) + (i * 9)) * sinRange;
-          // beam.angle += 0.1;
+          beam.x = f.phaserBody.x + Math.sin((crowningOffset * 0.85) + (i * 9)) * 16.0;
+
+          // Start spinning beams as
+          // crown nears top of head
+          if (crowningOffset < 4.75) {
+            const angleSpin = mapRange(crowningOffset, 1, 4.75, 3.75, 0.001);
+            beam.angle += angleSpin;
+          }
         } else {
           beam.x = f.phaserBody.x;
           beam.y = f.phaserBody.y - 15.0;
@@ -412,11 +416,15 @@ function Game(_mapLoader) {
           ringFlash(f, 0.1);
           ringFlash(f, 0.25);
           ringFlash(f, 0.3);
+          ringFlash(f, 0.35);
+          ringFlash(f, 0.55);
+          ringFlash(f, 0.6);
+          ringFlash(f, 0.65);
         }
 
         // Crowning complete, hide beams
         crowningOffset = -1.0;
-        winnerCrown.scale.setTo(0.1, 0.1);
+
         for (let i = 0; i < crownLightBeams.length; i += 1) {
           beam = crownLightBeams[i];
           beam.visible = false;
@@ -436,9 +444,9 @@ function Game(_mapLoader) {
     }
     const highlightRing = $(`<div class="highlightRing" style="color:${color};"></div>`);
     $(flyer.div).append(highlightRing);
-    TweenMax.set($(highlightRing), { css: { opacity: 1.0, scale: 0.25 } });
+    TweenMax.set($(highlightRing), { delay: 0.0 + offset, css: { opacity: 1.0, scale: 0.25 } });
     TweenMax.to($(highlightRing), 0.4, {
-      css: { opacity: 0.0, scale: 4 + offset },
+      css: { opacity: 0.0, scale: 4 + (offset * 3) },
       ease: Power2.easeOut,
       onComplete: removeElement,
       onCompleteParams: [highlightRing],
