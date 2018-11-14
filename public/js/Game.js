@@ -11,9 +11,12 @@ function Game(_mapLoader) {
    * Game Settings
    * =============
    */
-  const DEBUG_MODE = true;
+  // Add keyboard controllable character
+  // Show in-game visual feedback
+  const DEBUG_MODE = false;
+
   // Duration of gameplay rounds in seconds
-  const ROUND_DURATION = 30;
+  const ROUND_DURATION = 25;
 
   // Duration between rounds in seconds
   const LOBBY_DURATION = 15;
@@ -185,12 +188,12 @@ function Game(_mapLoader) {
 
     // Add holy beams of light
     // for crowning sequence
-    const beamCount = 11;
+    const beamCount = 36;
     for (let i = 0; i < beamCount; i += 1) {
       const beam = game.add.sprite(0, -9999, 'block-fade');
       beam.name = `light-beam${i}`;
-      beam.scale.setTo(Math.random() * 0.02 + 0.02, 40);
-      beam.alpha = 0.25;
+      beam.scale.setTo(Math.random() * 0.04 + 0.02, 40);
+      beam.alpha = 0.36;
       beam.anchor.y = 0.98 + (Math.random() * 0.02);
       beam.anchor.x = Math.random() * 1.0;
 
@@ -199,8 +202,8 @@ function Game(_mapLoader) {
         beam.scale.setTo(0.21, 50);
         beam.alpha = 0.85;
       } else {
-        beam.tint = 0xFBEF93;
-        beam.angle = Math.random() * 2 - 1;
+        if (Math.random() < 0.5) beam.tint = 0xFBEF93;
+        beam.angle = Math.random() * 360 - 180;
       }
 
       crownLightBeams.push(beam);
@@ -348,6 +351,9 @@ function Game(_mapLoader) {
   }
 
   function updateCrown(f) {
+    // Default
+    winnerCrown.y = 0;
+
     if (f.ax < 0) {
       winnerCrown.angle = -40;
       winnerCrown.anchor.x = 1.0;
@@ -366,17 +372,23 @@ function Game(_mapLoader) {
     if (roundCountdown < 0 && crowningOffset !== -1.0) {
       winnerCrown.angle = 0;
       winnerCrown.anchor.x = 0.5;
+      winnerCrown.anchor.y = 0.5;
+
 
       const mappedScale = mapRange(crowningOffset, 2.9, 20.0, 0.14, 0.35);
       winnerCrown.scale.setTo(mappedScale, mappedScale);
 
-      winnerCrown.anchor.y = crowningOffset;
+      winnerCrown.y = -crowningOffset * 30;
+
 
       // Animate beams of light
       let beam;
       for (let i = 0; i < crownLightBeams.length; i += 1) {
         beam = crownLightBeams[i];
-        beam.y = f.phaserBody.y - 15.0;
+        // beam.y = f.phaserBody.y - 15.0;
+
+        // Beam should point at crown's world Y
+        beam.y = winnerCrown.world.y;
 
         if (i > 0) {
           // TODO: make these constants
@@ -386,21 +398,58 @@ function Game(_mapLoader) {
           // beam.angle += 0.1;
         } else {
           beam.x = f.phaserBody.x;
+          beam.y = f.phaserBody.y - 15.0;
         }
       }
 
       // Drop crown down from sky
-      if (crowningOffset > 2.9) {
+      if (crowningOffset > 1) {
         crowningOffset -= 0.035;
       } else {
+        if (crowningOffset !== -1.0) {
+          ringFlash(f, 0.0);
+          ringFlash(f, 0.05);
+          ringFlash(f, 0.1);
+          ringFlash(f, 0.25);
+          ringFlash(f, 0.3);
+        }
+
         // Crowning complete, hide beams
         crowningOffset = -1.0;
         winnerCrown.scale.setTo(0.1, 0.1);
         for (let i = 0; i < crownLightBeams.length; i += 1) {
           beam = crownLightBeams[i];
           beam.visible = false;
+          hideBeams();
         }
       }
+    }
+  }
+
+  function ringFlash(flyer, offset) {
+    // Flash quick, expanding colored
+    // ring around flyer to highlight.
+    let color = 0xFBEF93;
+    if (Math.random() < 0.5) {
+      const { color: fColor } = flyer;
+      color = fColor;
+    }
+    const highlightRing = $(`<div class="highlightRing" style="color:${color};"></div>`);
+    $(flyer.div).append(highlightRing);
+    TweenMax.set($(highlightRing), { css: { opacity: 1.0, scale: 0.25 } });
+    TweenMax.to($(highlightRing), 0.4, {
+      css: { opacity: 0.0, scale: 4 + offset },
+      ease: Power2.easeOut,
+      onComplete: removeElement,
+      onCompleteParams: [highlightRing],
+      delay: 0.0 + offset,
+    });
+  }
+
+  function hideBeams() {
+    // Crowning complete, hide beams
+    for (let i = 0; i < crownLightBeams.length; i += 1) {
+      crownLightBeams[i].visible = false;
     }
   }
 
@@ -445,6 +494,7 @@ function Game(_mapLoader) {
     for (let i = 0; i < flyers.length; i += 1) {
       if (flyer === flyers[i]) {
         flyers[i].crowned = true;
+        winnerCrown.visible = true;
         flyers[i].phaserBody.sprite.addChild(winnerCrown);
 
         const userColor = parseInt(flyers[i].color.replace(/^#/, ''), 16);
@@ -768,6 +818,19 @@ function Game(_mapLoader) {
     const flyer = lookupFlyer(data.userid);
 
     if (flyer !== null && flyer !== undefined) {
+      // Save crown asset from being deleted
+      if (flyer.phaserBody.sprite.children.indexOf(winnerCrown) > -1) {
+        // Put back into game world
+        // for later use.
+        game.add.existing(winnerCrown);
+        winnerCrown.visible = false;
+
+        // Hide light beams in case
+        // this player is leaving
+        // in middle of crowning ceremony
+        hideBeams();
+      }
+
       // Remove div from html
       $(flyer.div).remove();
 
