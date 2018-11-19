@@ -32,6 +32,12 @@ $(document).ready(() => {
     game.controlTap(data);
   });
 
+  socket.on('maintenance-event', (data) => {
+    if (data.type === 'refresh-browser') {
+      window.location.reload(true);
+    }
+  });
+
   function onForceDisconnect(data) {
     // Emit idle player's socket id
     socket.emit('force-disconnect', { userid: data.userid, socketid: data.socketid });

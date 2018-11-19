@@ -1,0 +1,29 @@
+<!doctype html>
+<html>
+  <head>
+    <title>Controller</title>
+    <meta name="viewport" content="width=device-width; initial-scale=1.0; maximum-scale=1.0; user-scalable=0;">
+  </head>
+
+  <!-- CSS -->
+  <link rel="stylesheet" type="text/css" href="/css/maintenance.css">
+
+  <!-- JS -->
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="/js/vendor/jquery-1.12.4.min.js"></script>
+  <script src="/js/Maintenance.js"></script>
+
+  <body>
+
+    <button id="refresh-btn" type="button">Refresh Browser</button>
+    <p >Send signal to refresh game browser.</p>
+
+    <div class='log-container'>
+      <h3 class='log-label'>Log</h3>
+      <ul id="maintenance-log">
+      </ul>
+    </div>
+
+  </body>
+
+</html>

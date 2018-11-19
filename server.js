@@ -21,6 +21,7 @@ const profanity = require('profanity-util');
 
 const CLIENT_CONTROLLER = 'client_controller';
 const CLIENT_SHARED_SCREEN = 'client_shared_screen';
+const CLIENT_MAINTENANCE = 'client_maintenance';
 const DEVICE_STORAGE_KEY = 'smm_player_profile';
 
 // Holds reference to all
@@ -73,6 +74,12 @@ app.get('/screen', (request, response) => {
   response.sendFile(`${__dirname}/screen.html`);
 });
 
+// Catch requests for maintenance page
+app.get('/maintenance', (request, response) => {
+  console.log('[Serving /maintenance.html]');
+  console.log('Screen IP:', request.ip, request.ips);
+  response.sendFile(`${__dirname}/maintenance.html`);
+});
 
 // Socket.io connections
 io.on('connection', (socket) => {
@@ -228,6 +235,9 @@ io.on('connection', (socket) => {
         socketid,
         usercolor,
       });
+    } else if (usertype === CLIENT_MAINTENANCE) {
+      // Connecting fron maintenance interface
+      console.log('[CLIENT_MAINTENANCE] new connection');
     }
 
     logStats();
@@ -318,6 +328,12 @@ io.on('connection', (socket) => {
       console.log('Blocked attempt to send controller-event to non existing socket:');
       console.log(data);
     }
+  });
+
+  // Maitenance event
+  socket.on('maintenance-event', (data) => {
+    if (!sharedScreenConnected) return;
+    io.sockets.connected[sharedScreenSID].emit('maintenance-event', data);
   });
 });
 
