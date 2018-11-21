@@ -3,6 +3,7 @@
 
 // Imports
 const express = require('express');
+const childProcess = require('child_process');
 
 const app = express();
 const http = require('http').Server(app);
@@ -330,8 +331,19 @@ io.on('connection', (socket) => {
     }
   });
 
-  // Maitenance event
+  // Maintenance event
   socket.on('maintenance-event', (data) => {
+    if (data.type === 'restart-server') {
+      childProcess.execFile('pm2', ['restart', 'org.smm.play'], (error, stdout, stderr) => {
+        if (error) {
+          console.log('Attempt to use pm2 restart errored:', stderr);
+          // throw error;
+        }
+        console.log(stdout);
+      });
+    }
+
+    // Forward to game screen
     if (!sharedScreenConnected) return;
     io.sockets.connected[sharedScreenSID].emit('maintenance-event', data);
   });

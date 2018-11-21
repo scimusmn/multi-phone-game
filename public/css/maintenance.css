@@ -40,6 +40,10 @@ button {
     background-color: #008CBA;
 }
 
+button.careful {
+    background-color: #CE594B;
+}
+
 .log-container {
     margin: 10% auto 2% auto;
     color: #fDdA48;

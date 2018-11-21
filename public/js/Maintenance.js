@@ -11,8 +11,9 @@ $(document).ready(() => {
     socket.emit('register', data);
   }
 
-  const REQUIRE_PASSWORD = false;
-  const MAINTENANCE_ENTRY_PW = 'temp';
+  // Holds password to restrict access.
+  // Optionally filled by command flag
+  let MAINTENANCE_ENTRY_PW;
 
   /**
    * Listen for useful socket.io events
@@ -32,6 +33,11 @@ $(document).ready(() => {
     socket.emit('maintenance-event', eventData);
   }
 
+  function goRestartGameServer() {
+    const eventData = { type: 'restart-server' };
+    socket.emit('maintenance-event', eventData);
+  }
+
   // Append log message
   function addLog(logMsg) {
     const li = document.createElement('li');
@@ -42,8 +48,10 @@ $(document).ready(() => {
 
   // Require password prompt
   function passwordPrompt() {
-    if (REQUIRE_PASSWORD === true) {
-      const msg = 'Enter your nickname. Touch and drag to move. Tap screen to perform action.';
+    if (MAINTENANCE_ENTRY_PW !== ''
+          && MAINTENANCE_ENTRY_PW !== null
+          && MAINTENANCE_ENTRY_PW !== undefined) {
+      const msg = 'Enter maintenance password.';
       const enteredPW = prompt(msg, '');
 
       if (enteredPW === MAINTENANCE_ENTRY_PW) {
@@ -57,10 +65,14 @@ $(document).ready(() => {
     }
   }
 
-  // Listen for button click
+  // Listen for button clicks
   document.getElementById('refresh-btn').addEventListener('click', () => {
     goRefreshGameBrowser();
     addLog('Refresh request sent...');
+  });
+  document.getElementById('restart-btn').addEventListener('click', () => {
+    goRestartGameServer();
+    addLog('Server restart request sent...');
   });
 
   // Kick things off
