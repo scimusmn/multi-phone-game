@@ -13,19 +13,19 @@ function Game(_mapLoader) {
    */
   // Add keyboard controllable character
   // Show in-game visual feedback
-  const DEBUG_MODE = true;
+  const DEBUG_MODE = false;
 
   // Duration of gameplay rounds in seconds
-  const ROUND_DURATION = 25;
+  const ROUND_DURATION = 61;
 
   // Duration between rounds in seconds
-  const LOBBY_DURATION = 15;
+  const LOBBY_DURATION = 31;
 
   // Allow players to stun eachother
   const STUNS_ENABLED = true;
 
   // Crown the winner of each round (dramatic)
-  const CROWNS_ENABLED = false;
+  const CROWNS_ENABLED = true;
   const POINTS_PER_BRICK = 10;
   const GAME_STAGE_WIDTH = 1666;
   const GAME_STAGE_HEIGHT = 1080;

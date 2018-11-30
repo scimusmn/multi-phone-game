@@ -168,8 +168,8 @@ $(document).ready(() => {
     // TODO - Can I attempt to reconnect?
 
     if (reason === 'ping timeout') {
-      // you should renew token or do another important things before reconnecting
-      console.log('That darn ping timeout. Attemptoin');
+      // You should renew token or do another important things before reconnecting
+      console.log('That darn ping timeout.');
       setTimeout(() => {
         console.log('Attempting reconnect');
         displayMessageToUser(`Attempting reconnect after ping timeout. (${reason})`, false);

@@ -49,27 +49,36 @@ if (process.argv.indexOf('--port') !== -1) {
 app.set('port', portNumber);
 app.use('/', express.static(path.join(__dirname, 'public')));
 
-// Uncomment to allow sniffing IP addresses (https://goo.gl/rHLCgE)
-// app.enable('trust proxy');
-
 // Serve client files
 app.get('/', (request, response) => {
   const userAgent = request.headers['user-agent'];
-  const ua = uaParser.parseUA(userAgent).toString();// -> e.g. "Safari 5.0.1"
-  const os = uaParser.parseOS(userAgent).toString();// -> "iOS 5.1"
-  const device = uaParser.parseDevice(userAgent).toString();// -> "iPhone"
+  // User agent browser. e.g. "Safari 5.0.1"
+  const ua = uaParser.parseUA(userAgent).toString();
+  // Operating system. e.g. "iOS 5.1"
+  const os = uaParser.parseOS(userAgent).toString();
+  // Device name. e.g. "iPhone"
+  const device = uaParser.parseDevice(userAgent).toString();
 
-  console.log('Serving controller.html to: ', device, ' running ', ua, ' on ', os);
-  console.log('Controller IP:', request.ip, request.ips);
+  console.group('[Request -> controller.html]');
+  console.log('device:', device);
+  console.log('ua:', ua);
+  console.log('os:', os);
+  console.log('request.ip:', request.ip);
+  console.log('request.ips:', request.ips);
+  console.groupEnd();
+
   response.sendFile(`${__dirname}/controller.html`);
 });
 
 app.get('/screen', (request, response) => {
-  console.log('[Serving /screen.html] Is sharedScreenConnected:', sharedScreenConnected);
-  console.log('Screen IP:', request.ip, request.ips);
+  console.group('[Request -> screen.html]');
+  console.log('sharedScreenConnected:', sharedScreenConnected);
+  console.log('request.ip', request.ip);
+  console.log('request.ips', request.ips);
+  console.groupEnd();
 
   if (sharedScreenConnected === true) {
-    console.log('Warning! Shared screen already connected. Unexpectedly serving another.');
+    console.warn('[Warning] Shared screen already connected. Unexpectedly serving another.');
   }
 
   response.sendFile(`${__dirname}/screen.html`);
@@ -77,8 +86,11 @@ app.get('/screen', (request, response) => {
 
 // Catch requests for maintenance page
 app.get('/maintenance', (request, response) => {
-  console.log('[Serving /maintenance.html]');
-  console.log('Screen IP:', request.ip, request.ips);
+  console.group('[Request -> maintenance.html]');
+  console.log('request.ip', request.ip);
+  console.log('request.ips', request.ips);
+  console.groupEnd();
+
   response.sendFile(`${__dirname}/maintenance.html`);
 });
 
@@ -92,10 +104,11 @@ io.on('connection', (socket) => {
   let usercolor;
 
   function logStats() {
-    console.log('[STATS] client count:',
-      Object.keys(clients).length,
-      '| shared screen status:',
-      sharedScreenConnected, sharedScreenSID);
+    console.group('[Game Stats]');
+    console.log('client count:', Object.keys(clients).length);
+    console.log('sharedScreenConnected:', sharedScreenConnected);
+    console.log('sharedScreenSID:', sharedScreenSID);
+    console.groupEnd();
   }
 
   function newUserData() {
@@ -109,7 +122,9 @@ io.on('connection', (socket) => {
   }
 
   function forceDisconnectUser(data) {
-    console.log('forceDisconnectUser()', data);
+    console.group('[Force Disconnect User]');
+    console.log(data);
+    console.groupEnd();
 
     // Do nothing if shared big screen isn't connected
     if (!sharedScreenSID) return;
@@ -127,7 +142,11 @@ io.on('connection', (socket) => {
     if (disconnectSocket) {
       disconnectSocket.emit('alert-message', { message: data.disconnectMessage });
     } else {
-      console.log('Blocked attempt to send force-disconnect to non-existing socket:', data);
+      // TODO: This seems to happen often, probably when
+      // a user puts their phone to sleep and walks away.
+      console.group('[Warning] Blocked sending force-disconnect to non-existing socket client.');
+      console.log(data);
+      console.groupEnd();
     }
 
     // Disconnect and cease
@@ -158,7 +177,9 @@ io.on('connection', (socket) => {
 
   // User registered
   socket.on('register', (data) => {
-    console.log('[REGISTER]', data.nickname, data.usertype, data.userid);
+    console.group('[Register]');
+    console.log(data);
+    console.groupEnd();
 
     socketid = socket.id;
     ({ usertype, usercolor } = data);
@@ -166,15 +187,15 @@ io.on('connection', (socket) => {
 
     if (usertype === CLIENT_SHARED_SCREEN) {
       if (sharedScreenConnected === true) {
-        console.log('Warning! Shared screen was already connected.');
+        console.warn('[Warning] Shared screen already connected.');
 
         const screenSocket = io.sockets.connected[sharedScreenSID];
 
         if (screenSocket) {
-          console.log('Force disconnecting current shared screen.');
+          console.log('[Force Disconnect] Disconnecting current shared screen.');
           screenSocket.disconnect();
         } else {
-          console.log('Previous screen socket did not exist despite never disconnecting.');
+          console.warn('[Warning] Prev screen socket null despite never disconnecting.');
         }
 
         // We are currently allowing
@@ -206,10 +227,12 @@ io.on('connection', (socket) => {
          * browser/device, so we disconnect
          * the previous connection.
          */
-        console.log(`Returning user ${userid}`);
+        console.group('[Return user]');
+        console.log('userid:', userid);
+        console.groupEnd();
         const prevConnected = clients[userid];
         if (prevConnected && prevConnected !== socket.id) {
-          // TODO: Display "Disconnected" message on previous tab.
+          // TODO: Display "Disconnected" message on previous tab?
           console.log(`Disconnecting redundant user socket: ${clients[userid]}`);
           prevConnected.emit('alert-message', {
             message: 'Whoops you disconnected! Reload to play.',
@@ -218,7 +241,9 @@ io.on('connection', (socket) => {
           delete clients[userid];
         }
       } else {
-        console.log('Registered first timer:', userid);
+        console.group('[First-time user]');
+        console.log('userid:', userid);
+        console.groupEnd();
 
         // New user
         userid = puid.generate();
@@ -238,7 +263,7 @@ io.on('connection', (socket) => {
       });
     } else if (usertype === CLIENT_MAINTENANCE) {
       // Connecting fron maintenance interface
-      console.log('[CLIENT_MAINTENANCE] new connection');
+      console.log('[Client maintenance] new connection');
     }
 
     logStats();
@@ -246,11 +271,16 @@ io.on('connection', (socket) => {
 
   // User disconnected
   socket.on('disconnect', (reason) => {
-    console.log('[DISCONNECT] event recieved:', reason, usertype, nickname, userid);
+    console.group('[Disconnect]');
+    console.log('reason:', reason);
+    console.log('usertype:', usertype);
+    console.log('nickname:', nickname);
+    console.log('userid:', userid);
 
     if (usertype === CLIENT_CONTROLLER && sharedScreenConnected) {
       if (reason === 'ping timeout') {
-        console.log('What just a second. That dang ping timeout. Should attempt reconnect?');
+        console.warn('[Warning] That dang ping timeout.');
+        // TODO: Should we attempt to reconnect on ping timeout?
       } else {
         io.sockets.connected[sharedScreenSID].emit('remove-player', {
           nickname,
@@ -259,19 +289,19 @@ io.on('connection', (socket) => {
       }
     } else if (usertype === CLIENT_SHARED_SCREEN) {
       if (sharedScreenSID === socketid) {
-        console.log('Disconnecting screen matches active screen. Expected.');
+        console.log('Disconnecting screen matches active screen as expected.');
 
         sharedScreenConnected = false;
         sharedScreenSID = null;
-
-        console.log('[No SHARED SCREEN!] The shared screen is no longer connected.');
       } else {
+        console.warn('[Warning] Disconnecting screen did not match active screen.');
+
         sharedScreenConnected = false;
         sharedScreenSID = null;
-
-        console.log('Warning! Ensure only one screen is being served!');
       }
     }
+
+    console.groupEnd();
 
     // Stop tracking this socket
     delete clients[userid];
@@ -279,13 +309,20 @@ io.on('connection', (socket) => {
     logStats();
   });
 
+  /*
+  // This is for debugging purpose only
+  // this socket event is pre-disconnect
   socket.on('disconnecting', (reason) => {
-    console.log('[DISCONNECTING...]', reason, userid, nickname);
+    console.group('[Disconnecting...]');
+    console.log('reason:', reason);
+    console.log('usertype:', usertype);
+    console.log('nickname:', nickname);
+    console.log('userid:', userid);
+    console.groupEnd();
   });
-
+*/
   // Force specific client to disconnect
   socket.on('force-disconnect', (data) => {
-    console.log('[FORCE-DISCONNECT]', data);
     const newData = data;
     const msg = 'Disconnected due to inactivity. Reload play.smm.org to join again.';
     newData.disconnectMessage = msg;
@@ -296,7 +333,9 @@ io.on('connection', (socket) => {
   // Usually when user has left their mobile
   // browser or opened a new tab.
   socket.on('controller-lost-focus', (data) => {
-    console.log('[CONTROLLER-LOST-FOCUS]', data);
+    console.group('[Controller Lost Focus]');
+    console.log(data);
+    console.groupEnd();
     const freshData = {};
     freshData.socketid = socketid;
     freshData.userid = userid;
@@ -326,21 +365,25 @@ io.on('connection', (socket) => {
     if (targetSocket) {
       targetSocket.emit('controller-event', data);
     } else {
-      console.log('Blocked attempt to send controller-event to non existing socket:');
+      console.group('[Warning] Blocked attempt to send controller-event to non existing socket.');
       console.log(data);
+      console.groupEnd();
     }
   });
 
   // Maintenance event
   socket.on('maintenance-event', (data) => {
+    console.group('[Maintenance Event]');
+    console.log(data);
     if (data.type === 'restart-server') {
       childProcess.execFile('pm2', ['restart', 'org.smm.play'], (error, stdout, stderr) => {
         if (error) {
-          console.log('Attempt to use pm2 restart errored:', stderr);
+          console.warn('[Warning] Attempt to use pm2 restart errored:', stderr);
           // throw error;
         }
         console.log(stdout);
       });
+      console.groupEnd();
     }
 
     // Forward to game screen
@@ -351,10 +394,19 @@ io.on('connection', (socket) => {
 
 // Listen for http requests on port <portNumber>
 http.listen(portNumber, () => {
-  console.log(`Listening to Node server on port ${portNumber}...`);
+  console.group('[Express Settings]');
+  console.log('port:', app.settings.port);
+  console.groupEnd();
 });
 
+
+// Log header
+console.log('[>>------>                                           <------<<]');
+console.log('[>>------> Starting Multiplayer Phone Game Server... <------<<]');
+console.log('[>>------>                                           <------<<]');
+
 // Print socket io settings
-console.log('SOCKET.IO SETTINGS');
+console.group('[Socket.io Settings]');
 console.log('pingTimeout:', io.engine.pingTimeout);
 console.log('pingInterval:', io.engine.pingInterval);
+console.groupEnd();
