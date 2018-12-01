@@ -188,22 +188,22 @@ function Game(_mapLoader) {
 
     // Add holy beams of light
     // for crowning sequence
-    const beamCount = 36;
+    const beamCount = 31;
     for (let i = 0; i < beamCount; i += 1) {
       const beam = game.add.sprite(0, -9999, 'block-fade');
       beam.name = `light-beam${i}`;
-      beam.scale.setTo(Math.random() * 0.04 + 0.02, 40);
-      beam.alpha = 0.36;
+      beam.scale.setTo(Math.random() * 0.04 + 0.03, 40);
+      beam.alpha = 0.45;
       beam.anchor.y = 0.98 + (Math.random() * 0.02);
       beam.anchor.x = Math.random() * 1.0;
 
       if (i === 0) {
         beam.anchor.x = 0.5;
-        beam.scale.setTo(0.21, 50);
+        beam.scale.setTo(0.31, 50);
         beam.alpha = 0.85;
       } else {
-        if (Math.random() < 0.5) beam.tint = 0xFBEF93;
-        beam.angle = Math.random() * 360 - 180;
+        if (Math.random() < 0.666) beam.tint = 0xFBEF93;
+        beam.angle = (i * (360 / beamCount)) + (Math.random() * 10 - 5);
       }
 
       crownLightBeams.push(beam);
@@ -820,8 +820,6 @@ function Game(_mapLoader) {
   };
 
   this.removePlayer = (data) => {
-    console.log(`Game.removePlayer: ${data}`);
-
     // Remove flyer from stage, phaser system, and game loop
     const flyer = lookupFlyer(data.userid);
 
@@ -855,7 +853,7 @@ function Game(_mapLoader) {
   this.controlVector = (data) => {
     const f = lookupFlyer(data.userid);
     if (f === undefined || f === null) {
-      console.log('[Warning] Control vector sent to non-existent flyer.');
+      // console.log('[Warning] Control vector sent to non-existent flyer.');
       // In this scenario, a controller is attempting
       // to send data to a flyer that doesn't exist.
       // This scenario might come from the game being refreshed
