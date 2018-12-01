@@ -13,7 +13,7 @@ function Game(_mapLoader) {
    */
   // Add keyboard controllable character
   // Show in-game visual feedback
-  const DEBUG_MODE = false;
+  const DEBUG_MODE = true;
 
   // Duration of gameplay rounds in seconds
   const ROUND_DURATION = 61;
@@ -854,7 +854,34 @@ function Game(_mapLoader) {
 
   this.controlVector = (data) => {
     const f = lookupFlyer(data.userid);
-    if (f === undefined) return;
+    if (f === undefined || f === null) {
+      console.log('[Warning] Control vector sent to non-existent flyer.');
+      // In this scenario, a controller is attempting
+      // to send data to a flyer that doesn't exist.
+      // This scenario might come from the game being refreshed
+      // while controllers are connected, then they try
+      // to open their connecton back up when the game
+      // is reloaded and ready, but their flyer no longer
+      // exists.
+
+      // TODO: Would it be better to quickly re-add
+      // the flyer this controller is expecting
+      // to find?
+
+      // Let's holla back at this controller
+      // and force them to reconnect...
+      if (onForceDisconnectCallback) {
+        onForceDisconnectCallback.call(undefined,
+          {
+            userid: data.userid,
+            socketid: data.socketid,
+          });
+      }
+      // Exit. No flyer to control...
+      return;
+    }
+
+    // No need to continue if stunned.
     if (f.stunned) return;
 
     if (data.magnitude === 0) {
@@ -872,7 +899,27 @@ function Game(_mapLoader) {
 
   this.controlTap = (data) => {
     const f = lookupFlyer(data.userid);
-    if (f === undefined) return;
+
+    // If we are recieving control events
+    // for non-existent flyers, then it could
+    // be a socket that was opened before
+    // the game was opened.
+    if (f === undefined || f === null) {
+      console.log('[Warning] Control tap sent to non-existent flyer.');
+      // Let's holla back at this controller
+      // and force them to reconnect...
+      if (onForceDisconnectCallback) {
+        onForceDisconnectCallback.call(undefined,
+          {
+            userid: data.userid,
+            socketid: data.socketid,
+          });
+      }
+      // Exit. No flyer to control...
+      return;
+    }
+
+    // No need to continue when stunned.
     if (f.stunned) return;
 
     // Swipe action

@@ -7,6 +7,7 @@
 # TODO: At randomized intervals, close random windows and open others
 
 CONTROLLER_URL="http://localhost:3000/?simulateInput=true"
+# CONTROLLER_URL="https://play.smm.org/?simulateInput=true"
 
 # Spawns single controller by default, 
 # or takes first command flag ( e.g. $bash simulate-controllers.sh 20 )
