@@ -9,3 +9,5 @@ work/
 
 # Production deploy config
 pm2-env.json
+
+package-lock.json
