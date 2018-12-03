@@ -1,7 +1,7 @@
 {
   "name": "illumination-game",
   "version": "0.0.1",
-  "description": "multiplayer game for illumination",
+  "description": "Multiplayer game for Illumination",
   "license": "UNLICENSED",
   "dependencies": {
     "eslint-config-airbnb": "^17.1.0",
