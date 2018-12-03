@@ -4,10 +4,11 @@ work/
 *.webm
 *.log
 
+# We're using yarn for this library don't include conflicting npm lock files
+package-lock.json
+
 # Compiled Python files
 *.pyc
 
 # Production deploy config
 pm2-env.json
-
-package-lock.json
