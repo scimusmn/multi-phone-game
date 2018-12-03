@@ -387,8 +387,8 @@ io.on('connection', (socket) => {
         }
         console.log(stdout);
       });
-      console.groupEnd();
     }
+    console.groupEnd();
 
     // Forward to game screen
     if (!sharedScreenConnected) return;
