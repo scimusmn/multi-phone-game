@@ -14,7 +14,7 @@ const io = require('socket.io')(http,
     pingTimeout: 2400000,
   });
 const path = require('path');
-const uaParser = require('ua-parser');
+const useragent = require('useragent');
 const Puid = require('puid');
 
 const puid = new Puid(true);
@@ -51,17 +51,21 @@ app.use('/', express.static(path.join(__dirname, 'public')));
 
 // Serve client files
 app.get('/', (request, response) => {
-  const userAgent = request.headers['user-agent'];
+  const agent = useragent.parse(request.headers['user-agent']);
+  const agentString = agent.toString().split('/');
+
   // User agent browser. e.g. "Safari 5.0.1"
-  const ua = uaParser.parseUA(userAgent).toString();
+  const userAgentString = agentString[0];
+
   // Operating system. e.g. "iOS 5.1"
-  const os = uaParser.parseOS(userAgent).toString();
+  const os = agentString[1];
+
   // Device name. e.g. "iPhone"
-  const device = uaParser.parseDevice(userAgent).toString();
+  const device = JSON.stringify(agent.device); // returns an object
 
   console.group('[Request -> controller.html]');
   console.log('device:', device);
-  console.log('ua:', ua);
+  console.log('ua:', userAgentString);
   console.log('os:', os);
   console.log('request.ip:', request.ip);
   console.log('request.ips:', request.ips);
