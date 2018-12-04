@@ -13,6 +13,7 @@
   },
   "devDependencies": {
     "eslint-config-airbnb-base": "13.1.0",
+    "faker": "^4.1.0",
     "object.assign": "4.1.0",
     "object.entries": "1.0.4"
   }

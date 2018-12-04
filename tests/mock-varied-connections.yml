@@ -1,0 +1,25 @@
+config:
+  target: 'https://play.smm.org/'
+  processor: "./my-functions.js"
+  socketio: 
+    query:
+      simulateInput: true
+  phases:
+    - duration: 30
+      arrivalRate: 1
+scenarios:
+  - engine: 'socketio'
+    flow:
+        - function: "generateRandomData"
+        - get: 
+            url: '/'
+        - log: "New user generated userName:{{userName}} color:{{userColor}} timeEnter:{{timeEnter}} timeExit:{{timeExit}}"
+        - think: 3
+        - emit:
+            channel: 'register'
+            data: { nickname: '{{userName}}', firstTime: true, usertype: 'client_controller', usercolor: '{{userColor}}' }
+        - log: 'generated user on screen'
+        - think: 10
+        - log: "Disconnect user lost focus mock"
+        - emit:
+            channel: 'controller-lost-focus'

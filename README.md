@@ -14,3 +14,20 @@ Modify the PORT value to match your server config.
 Deploy using fabric:
     fab -H server.example.com deploy.app:server_user,server.example.com,/opt/node-apps/app_path,pm2-process-name
 
+
+## Testing Tool
+    Built in some testing capabilities using [Artillery.io](https://artillery.io/docs/).
+
+    Get started:
+
+    Install Artillery Globally:
+
+      npm install -g artillery
+
+    CD into project dir:
+
+      cd multiplayer-phone-game/tests
+    
+    run a test:
+
+      artillery run mock-connections.yml

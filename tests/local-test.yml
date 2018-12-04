@@ -1,0 +1,13 @@
+ # testing socket connection
+config:
+  target: 'http://172.17.67.221:3000/'
+  phases:
+    - duration: 30
+      arrivalRate: 1
+  socketio:
+    transports: ["websocket"]
+scenarios:
+  - engine: "socketio"
+    flow:
+      - think: 600 # do nothing for 10m and disconnect
+      

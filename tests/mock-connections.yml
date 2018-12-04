@@ -1,0 +1,18 @@
+config:
+  target: 'https://play.smm.org'
+  processor: "./my-functions.js"
+  phases:
+    - duration: 30
+      arrivalRate: 1
+scenarios:
+  - engine: 'socketio'
+    flow:
+        - function: "generateRandomData"
+        - get: 
+            url: '/'
+            think: 5
+        - log: "New user generated"
+        - emit:
+            channel: 'register'
+            data: { nickname: '{{userName}}', firstTime: true, usertype: 'client_controller', usercolor: '{{userColor}}' }
+        - think: 10
