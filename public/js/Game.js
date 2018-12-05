@@ -182,8 +182,6 @@ function Game(_mapLoader) {
     // Add crown sprite to game
     winnerCrown = game.add.sprite(0, 0, 'crown');
     winnerCrown.name = 'crown';
-    winnerCrown.anchor.x = 0.5;
-    winnerCrown.anchor.y = 2.4;
     winnerCrown.scale.setTo(0.1, 0.1);
 
     // Add holy beams of light
@@ -312,7 +310,7 @@ function Game(_mapLoader) {
       if (f.crowned === true) {
         winnerCrown.angle = -40;
         winnerCrown.anchor.x = 1.0;
-        winnerCrown.anchor.y = 3.2;
+        winnerCrown.anchor.y = 2.6;
       }
     } else if (f.ax > 0) {
       fBody.moveRight(flyerSpeedHorizontal * Math.abs(f.ax));
@@ -324,7 +322,7 @@ function Game(_mapLoader) {
       if (f.crowned === true) {
         winnerCrown.angle = 40;
         winnerCrown.anchor.x = 0.0;
-        winnerCrown.anchor.y = 3.2;
+        winnerCrown.anchor.y = 2.6;
       }
     } else {
       fSprite.animations.play('idle');
@@ -332,7 +330,7 @@ function Game(_mapLoader) {
       if (f.crowned === true) {
         winnerCrown.angle = 0;
         winnerCrown.anchor.x = 0.5;
-        winnerCrown.anchor.y = 2.9;
+        winnerCrown.anchor.y = 2.25;
       }
     }
 
@@ -356,16 +354,16 @@ function Game(_mapLoader) {
 
     if (f.ax < 0) {
       winnerCrown.angle = -40;
-      winnerCrown.anchor.x = 1.0;
-      winnerCrown.anchor.y = 3.2;
+      winnerCrown.anchor.x = 0.9;
+      winnerCrown.anchor.y = 2.6;
     } else if (f.ax > 0) {
       winnerCrown.angle = 40;
-      winnerCrown.anchor.x = 0.0;
-      winnerCrown.anchor.y = 3.2;
+      winnerCrown.anchor.x = 0.1;
+      winnerCrown.anchor.y = 2.6;
     } else {
-      winnerCrown.angle = 0;
-      winnerCrown.anchor.x = 0.5;
-      winnerCrown.anchor.y = 2.9;
+      winnerCrown.angle = 4;
+      winnerCrown.anchor.x = 0.525;
+      winnerCrown.anchor.y = 2.25;
     }
 
     // Crown new winner animation
