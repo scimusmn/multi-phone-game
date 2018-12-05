@@ -12,3 +12,5 @@ package-lock.json
 
 # Production deploy config
 pm2-env.json
+yarn.lock
+public/img/.DS_Store

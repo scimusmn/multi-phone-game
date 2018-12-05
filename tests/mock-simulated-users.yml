@@ -2,17 +2,21 @@ config:
   target: 'https://play.smm.org'
   processor: "./my-functions.js"
   phases:
-    - duration: 30
-      arrivalCount: 10
+    - duration: 10
+      arrivalCount: 4
 scenarios:
   - engine: 'socketio'
     flow:
         - function: "generateRandomData"
+        - function: "setupQueryParams"
         - get: 
-            url: '/'
+            url: '/?simulateInput={{ querySimulateInput }}&prefillName={{ queryPrefillName }}'
             think: 5
         - log: "New user generated"
         - emit:
             channel: 'register'
             data: { nickname: '{{userName}}', firstTime: true, usertype: 'client_controller', usercolor: '{{userColor}}' }
+        - log: "Starting simulated input..."
         - think: 10
+        - log: "Completed"
+

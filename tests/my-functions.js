@@ -24,3 +24,18 @@ function generateRandomData(userContext, events, done) {
   // continue with executing the scenario:
   return done();
 }
+
+function setupQueryParams(userContext, events, done) {
+  userContext.vars.querySimulateInput = 'true'; // set the "query" variable for the virtual user
+  userContext.vars.queryPrefillName = 'YaYa'; // set the "query" variable for the virtual user
+  return done();
+}
+
+function simInputLoop(context, next) {
+  const rNumber = Math.random();
+  let doContinueLooping = true;
+  if (rNumber < 0.2) {
+    doContinueLooping = false;
+  }
+  return next(doContinueLooping); // call back with true to loop again
+}
