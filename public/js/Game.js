@@ -13,7 +13,7 @@ function Game(_mapLoader) {
    */
   // Add keyboard controllable character
   // Show in-game visual feedback
-  const DEBUG_MODE = true;
+  const DEBUG_MODE = false;
 
   // Duration of gameplay rounds in seconds
   const ROUND_DURATION = 61;
@@ -186,7 +186,7 @@ function Game(_mapLoader) {
 
     // Add holy beams of light
     // for crowning sequence
-    const beamCount = 31;
+    const beamCount = 21;
     for (let i = 0; i < beamCount; i += 1) {
       const beam = game.add.sprite(0, -9999, 'block-fade');
       beam.name = `light-beam${i}`;
@@ -197,7 +197,7 @@ function Game(_mapLoader) {
 
       if (i === 0) {
         beam.anchor.x = 0.5;
-        beam.scale.setTo(0.31, 50);
+        beam.scale.setTo(0.34, 50);
         beam.alpha = 0.85;
       } else {
         if (Math.random() < 0.666) beam.tint = 0xFBEF93;
@@ -644,6 +644,12 @@ function Game(_mapLoader) {
 
   // Give control back to stunned player
   function liftStun(flyer) {
+    // In case the flyer left before
+    // stun lifted, exit now.
+    if (!flyer || flyer === undefined) {
+      return;
+    }
+
     flyer.stunned = false;
 
     // Reapply gravity
