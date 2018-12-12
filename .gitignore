@@ -3,6 +3,7 @@ public/video/*
 work/
 *.webm
 *.log
+*.DS_Store
 
 # We're using yarn for this library don't include conflicting npm lock files
 package-lock.json
@@ -14,6 +15,3 @@ package-lock.json
 pm2-env.json
 yarn.lock
 public/img/.DS_Store
-tests/.DS_Store
-tests/.DS_Store
-tests/.DS_Store
