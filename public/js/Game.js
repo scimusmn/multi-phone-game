@@ -16,10 +16,10 @@ function Game(_mapLoader) {
   const DEBUG_MODE = false;
 
   // Duration of gameplay rounds in seconds
-  const ROUND_DURATION = 15;
+  const ROUND_DURATION = 75;
 
   // Duration between rounds in seconds
-  const LOBBY_DURATION = 15;
+  const LOBBY_DURATION = 30;
 
   // Allow players to stun eachother
   const STUNS_ENABLED = true;
@@ -420,7 +420,7 @@ function Game(_mapLoader) {
           ringFlash(f, 0.55);
           ringFlash(f, 0.6);
           ringFlash(f, 0.65);
-          winnerCrown.scale.setTo(0.14, 0.14);
+          winnerCrown.scale.setTo(0.13, 0.13);
         }
 
         // Crowning complete, hide beams
