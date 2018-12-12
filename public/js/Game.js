@@ -16,10 +16,10 @@ function Game(_mapLoader) {
   const DEBUG_MODE = false;
 
   // Duration of gameplay rounds in seconds
-  const ROUND_DURATION = 61;
+  const ROUND_DURATION = 15;
 
   // Duration between rounds in seconds
-  const LOBBY_DURATION = 31;
+  const LOBBY_DURATION = 15;
 
   // Allow players to stun eachother
   const STUNS_ENABLED = true;
@@ -37,6 +37,8 @@ function Game(_mapLoader) {
   let stageDiv = {};
   let stageBounds = {};
   let roundCountdown = -LOBBY_DURATION;
+  let socketFreezeCount = 0;
+  let firstFlyerAdded = false;
 
   // Callback methods usded
   let onForceDisconnectCallback;
@@ -373,7 +375,7 @@ function Game(_mapLoader) {
       winnerCrown.anchor.y = 0.5;
 
 
-      const mappedScale = mapRange(crowningOffset, 2.9, 20.0, 0.14, 0.35);
+      const mappedScale = mapRange(crowningOffset, 2.9, 20.0, 0.14, 0.74);
       winnerCrown.scale.setTo(mappedScale, mappedScale);
 
       winnerCrown.y = -crowningOffset * 30;
@@ -418,6 +420,7 @@ function Game(_mapLoader) {
           ringFlash(f, 0.55);
           ringFlash(f, 0.6);
           ringFlash(f, 0.65);
+          winnerCrown.scale.setTo(0.14, 0.14);
         }
 
         // Crowning complete, hide beams
@@ -738,12 +741,38 @@ function Game(_mapLoader) {
           endRound();
         }
       }
+
+      // Increment count to monitor
+      // how long it's been since last
+      // socket communication.
+      if (!DEBUG_MODE && firstFlyerAdded && socketFreezeCount > 20 && flyers.length > 0) {
+        console.warn('[Warning] Timeout since last recieved socket message. Reloading page.');
+
+        for (let i = 0; i < flyers.length; i += 1) {
+          const f = flyers[i];
+          if (onForceDisconnectCallback) {
+            onForceDisconnectCallback.call(undefined,
+              {
+                userid: f.userid,
+                socketid: f.socketid,
+              });
+          }
+        }
+
+        window.location.reload(true);
+      } else {
+        socketFreezeCount += 1;
+      }
     }, 1000);
   };
 
   this.stop = () => {
     // Stop game loop
     window.cancelAnimationFrame(currentFrameRequest);
+  };
+
+  this.resetFreezeTimeout = () => {
+    socketFreezeCount = 0;
   };
 
   this.setBounds = (x, y, w, h) => {
@@ -821,6 +850,9 @@ function Game(_mapLoader) {
     };
 
     flyers.push(newFlyer);
+
+    firstFlyerAdded = true;
+    this.resetFreezeTimeout();
   };
 
   this.removePlayer = (data) => {
@@ -897,6 +929,8 @@ function Game(_mapLoader) {
     // Set acceleration for phaser
     f.ax = Math.cos(data.angle) * data.magnitude;
     f.ay = Math.sin(data.angle) * data.magnitude;
+
+    this.resetFreezeTimeout();
   };
 
   this.controlTap = (data) => {
@@ -958,9 +992,11 @@ function Game(_mapLoader) {
 
     // Phaser attempt swipe (for bricks)
     flyerBrickSwipe(f);
+
+    this.resetFreezeTimeout();
   };
 
-  /* =============== */
+  /* ===============
   /* PRIVATE METHODS */
   /* =============== */
 
