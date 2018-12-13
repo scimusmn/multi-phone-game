@@ -658,7 +658,12 @@ function Game(_mapLoader) {
     // Reapply gravity
     flyer.phaserBody.gravityScale = 1;
     flyer.phaserSprite.alpha = 1.0;
-    flyer.phaserSprite.animations.paused = false;
+
+    // Prevents rare bug when flyer is
+    // removed while stunned.
+    if (flyer.phaserSprite.animations) {
+      flyer.phaserSprite.animations.paused = false;
+    }
 
     TweenLite.set($(flyer.div), { css: { opacity: 1 } });
   }
