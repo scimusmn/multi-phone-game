@@ -71,7 +71,11 @@ app.get('/', (request, response) => {
   console.log('request.ips:', request.ips);
   console.groupEnd();
 
-  response.sendFile(`${__dirname}/controller.html`);
+  if (sharedScreenConnected) {
+    response.sendFile(`${__dirname}/controller.html`);
+  } else {
+    response.sendFile(`${__dirname}/whoops.html`);
+  }
 });
 
 app.get('/screen', (request, response) => {
@@ -170,7 +174,7 @@ io.on('connection', (socket) => {
     if (/\S/.test(nameStringOut) && nameStringOut !== undefined) {
       [nameStringOut] = profanity.purify(nameStr, {
         replace: 'true',
-        replacementsList: ['PottyMouth', 'Gutter', 'DullMind', 'Gross'],
+        replacementsList: ['PottyMouth', 'Gutter', 'Dullard', 'Gross'],
       });
     } else {
       nameStringOut = `Hero_${Math.round(Math.random() * 999)}`;
@@ -212,7 +216,11 @@ io.on('connection', (socket) => {
         sharedScreenSID = socket.id;
         sharedScreenConnected = true;
       }
-    } else if (usertype === CLIENT_CONTROLLER && sharedScreenConnected) {
+    } else if (usertype === CLIENT_CONTROLLER) {
+      if (!sharedScreenConnected) {
+        console.warn('[Warning] Controller cannot join without shared screen connected.');
+        return;
+      }
       /**
        * If returning user, use
        * existing userid found on
@@ -373,6 +381,16 @@ io.on('connection', (socket) => {
       console.log(data);
       console.groupEnd();
     }
+  });
+
+  // Force specific client to disconnect
+  socket.on('screen-ping-test', (data) => {
+    if (!sharedScreenConnected) {
+      console.warn('[Warning] Could not return ping test without shared screen.');
+      return;
+    }
+
+    io.sockets.connected[sharedScreenSID].emit('screen-pong-test', data);
   });
 
   // Maintenance event

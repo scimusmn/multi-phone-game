@@ -15,7 +15,7 @@ sleep 1
 while :
 do
 	echo "Spawn/Kill loop. Press [CTRL+C] to stop.."
-	SPAWN_RANDO=$(( ( RANDOM % 3 )  + 0 ))
+	SPAWN_RANDO=$(( ( RANDOM % 2 )  + 0 ))
 	# Spawn a random amount of controllers
 	bash ./spawn-controllers.sh $SPAWN_RANDO
 
@@ -24,5 +24,3 @@ do
 
 	sleep 5
 done
-
-echo "All done!"

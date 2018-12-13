@@ -38,6 +38,29 @@ $(document).ready(() => {
     }
   });
 
+  // Manual Ping Pong with server
+  // This is our way of knowing when we've
+  // lost connection from the client side.
+  let pongCounter = 0;
+  setInterval(() => {
+    pongCounter += 1;
+
+    if (pongCounter >= 5) {
+      console.warn('[Warning] Ping pong timeout. Connection broken. Reloading.');
+      window.location.reload(true);
+    }
+
+    socket.emit('screen-ping-test', { timestamp: Date.now() });
+  }, 5000);
+
+  socket.on('screen-pong-test', (data) => {
+    const pongDelay = Date.now() - data.timestamp;
+    pongCounter -= 1;
+    if (pongDelay > 500 || pongCounter >= 2) {
+      console.warn('[Warning] Pongs not returning quickly from server', pongDelay, pongCounter);
+    }
+  });
+
   function onForceDisconnect(data) {
     // Emit idle player's socket id
     socket.emit('force-disconnect', { userid: data.userid, socketid: data.socketid });
