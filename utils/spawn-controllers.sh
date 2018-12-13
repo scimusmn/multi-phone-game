@@ -1,10 +1,5 @@
 #!/bin/bash
-
-# Run this script to simulate many controllers connecting to game simultaneously
-
-# TODO: Open different browsers (chrome, safari, and firefox)  
-
-# TODO: At randomized intervals, close random windows and open others
+#
 
 # CONTROLLER_URL="http://localhost:3000/?simulateInput=true"
 CONTROLLER_URL="https://play.smm.org/?simulateInput=true"
@@ -19,7 +14,7 @@ for ((i=1; i<=SPAWN_COUNT; i++));
 		open -na "Google Chrome" --args --new-window $myControllerURL --window-size="300,300" --window-position="100,100" 
 		echo $i
 		echo 'URL: '+$myControllerURL
-    	sleep 0.5
+    	sleep 0.25
 done
 
 echo "All done!"
