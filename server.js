@@ -71,9 +71,10 @@ app.get('/', (request, response) => {
   console.log('request.ips:', request.ips);
   console.groupEnd();
 
-  if (sharedScreenConnected) {
+  if (sharedScreenConnected === true) {
     response.sendFile(`${__dirname}/controller.html`);
   } else {
+    console.warn('[Warning] Cannot server controller.html without screen connected.');
     response.sendFile(`${__dirname}/whoops.html`);
   }
 });
