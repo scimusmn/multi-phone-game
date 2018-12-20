@@ -1,5 +1,6 @@
 /* eslint no-console: 0 */
 /* eslint max-len: ["error", { "code": 100 }] */
+/* eslint no-use-before-define: 0 */
 
 // Imports
 const express = require('express');
@@ -22,7 +23,6 @@ const profanity = require('profanity-util');
 
 const { createLogger, format } = require('winston');
 const DailyRotateFile = require('winston-daily-rotate-file');
-const os = require('os');
 
 const CLIENT_CONTROLLER = 'client_controller';
 const CLIENT_SHARED_SCREEN = 'client_shared_screen';
@@ -68,30 +68,30 @@ app.get('/', (request, response) => {
   const device = JSON.stringify(agent.device); // returns an object
 
   console.group('[Request -> controller.html]');
-  console.log('device:', device);
-  console.log('ua:', userAgentString);
-  console.log('os:', os);
-  console.log('request.ip:', request.ip);
-  console.log('request.ips:', request.ips);
+  console.log(`device: ${device}`);
+  console.log(`ua: ${userAgentString}`);
+  console.log(`os: ${os}`);
+  console.log(`request.ip: ${request.ip}`);
+  console.log(`request.ips: ${request.ips}`);
   console.groupEnd();
 
   if (sharedScreenConnected === true) {
     response.sendFile(`${__dirname}/controller.html`);
   } else {
-    console.warn('[Warning] Cannot server controller.html without screen connected.');
+    winstonLogWarning('[Warning] Cannot server controller.html without screen connected.');
     response.sendFile(`${__dirname}/whoops.html`);
   }
 });
 
 app.get('/screen', (request, response) => {
   console.group('[Request -> screen.html]');
-  console.log('sharedScreenConnected:', sharedScreenConnected);
-  console.log('request.ip', request.ip);
-  console.log('request.ips', request.ips);
+  console.log(`sharedScreenConnected: ${sharedScreenConnected}`);
+  console.log(`request.ip ${request.ip}`);
+  console.log(`request.ips ${request.ips}`);
   console.groupEnd();
 
   if (sharedScreenConnected === true) {
-    console.warn('[Warning] Shared screen already connected. Unexpectedly serving another.');
+    winstonLogWarning('[Warning] Shared screen already connected. Unexpectedly serving another.');
   }
 
   response.sendFile(`${__dirname}/screen.html`);
@@ -100,8 +100,8 @@ app.get('/screen', (request, response) => {
 // Catch requests for maintenance page
 app.get('/maintenance', (request, response) => {
   console.group('[Request -> maintenance.html]');
-  console.log('request.ip', request.ip);
-  console.log('request.ips', request.ips);
+  console.log(`request.ip ${request.ip}`);
+  console.log(`request.ips ${request.ips}`);
   console.groupEnd();
 
   response.sendFile(`${__dirname}/maintenance.html`);
@@ -118,9 +118,9 @@ io.on('connection', (socket) => {
 
   function logStats() {
     console.group('[Game Stats]');
-    console.log('client count:', Object.keys(clients).length);
-    console.log('sharedScreenConnected:', sharedScreenConnected);
-    console.log('sharedScreenSID:', sharedScreenSID);
+    console.log(`client count: ${Object.keys(clients).length}`);
+    console.log(`sharedScreenConnected: ${sharedScreenConnected}`);
+    console.log(`sharedScreenSID: ${sharedScreenSID}`);
     console.groupEnd();
   }
 
@@ -200,7 +200,7 @@ io.on('connection', (socket) => {
 
     if (usertype === CLIENT_SHARED_SCREEN) {
       if (sharedScreenConnected === true) {
-        console.warn('[Warning] Shared screen already connected.');
+        winstonLogWarning('[Warning] Shared screen already connected.');
 
         const screenSocket = io.sockets.connected[sharedScreenSID];
 
@@ -208,7 +208,7 @@ io.on('connection', (socket) => {
           console.log('[Force Disconnect] Disconnecting current shared screen.');
           screenSocket.disconnect();
         } else {
-          console.warn('[Warning] Prev screen socket null despite never disconnecting.');
+          winstonLogWarning('[Warning] Prev screen socket null despite never disconnecting.');
         }
 
         // We are currently allowing
@@ -223,7 +223,7 @@ io.on('connection', (socket) => {
       }
     } else if (usertype === CLIENT_CONTROLLER) {
       if (!sharedScreenConnected) {
-        console.warn('[Warning] Controller cannot join without shared screen connected.');
+        winstonLogWarning('[Warning] Controller cannot join without shared screen connected.');
         return;
       }
       /**
@@ -245,15 +245,15 @@ io.on('connection', (socket) => {
          * the previous connection.
          */
         console.group('[Return user]');
-        console.log('userid:', userid);
+        console.log(`userid: ${userid}`);
         console.groupEnd();
         const prevConnected = clients[userid];
         if (prevConnected && prevConnected !== socket.id) {
           // TODO: Display "Disconnected" message on previous tab?
           console.log(`Disconnecting redundant user socket: ${clients[userid]}`);
-          prevConnected.emit('alert-message', {
+          prevConnected.emit(`alert-message ${{
             message: 'Whoops you disconnected! Reload to play.',
-          });
+          }}`);
           clients[userid].disconnect();
           delete clients[userid];
         }
@@ -289,14 +289,14 @@ io.on('connection', (socket) => {
   // User disconnected
   socket.on('disconnect', (reason) => {
     console.group('[Disconnect]');
-    console.log('reason:', reason);
-    console.log('usertype:', usertype);
-    console.log('nickname:', nickname);
-    console.log('userid:', userid);
+    console.log(`reason: ${reason}`);
+    console.log(`usertype: ${usertype}`);
+    console.log(`nickname: ${nickname}`);
+    console.log(`userid: ${userid}`);
 
     if (usertype === CLIENT_CONTROLLER && sharedScreenConnected) {
       if (reason === 'ping timeout') {
-        console.warn('[Warning] That dang ping timeout.');
+        winstonLogWarning('[Warning] That dang ping timeout.');
         // TODO: Should we attempt to reconnect on ping timeout?
       } else {
         io.sockets.connected[sharedScreenSID].emit('remove-player', {
@@ -311,7 +311,7 @@ io.on('connection', (socket) => {
         sharedScreenConnected = false;
         sharedScreenSID = null;
       } else {
-        console.warn('[Warning] Disconnecting screen did not match active screen.');
+        winstonLogWarning('[Warning] Disconnecting screen did not match active screen.');
 
         sharedScreenConnected = false;
         sharedScreenSID = null;
@@ -391,7 +391,7 @@ io.on('connection', (socket) => {
   // Force specific client to disconnect
   socket.on('screen-ping-test', (data) => {
     if (!sharedScreenConnected) {
-      console.warn('[Warning] Could not return ping test without shared screen.');
+      winstonLogWarning('[Warning] Could not return ping test without shared screen.');
       return;
     }
 
@@ -405,7 +405,7 @@ io.on('connection', (socket) => {
     if (data.type === 'restart-server') {
       childProcess.execFile('pm2', ['restart', 'org.smm.play'], (error, stdout, stderr) => {
         if (error) {
-          console.warn('[Warning] Attempt to use pm2 restart errored:', stderr);
+          winstonLogWarning(`[Warning] Attempt to use pm2 restart errored: ${stderr}`);
           // throw error;
         }
         console.log(stdout);
@@ -422,26 +422,15 @@ io.on('connection', (socket) => {
 // Listen for http requests on port <portNumber>
 http.listen(portNumber, () => {
   console.group('[Express Settings]');
-  console.log('port:', app.settings.port);
+  console.log(`port: ${app.settings.port}`);
   console.groupEnd();
 });
 
 
-// TODO: FIND THE APPROPRIATE LOG FOLDER FOR OS
-
 // Setup file logging with Winston
 //
-// Logs are saved in the appropriate log folder for the current OS and rotated daily.
-//
-// Electron's getPath helper isn't working for Ubuntu Linux right now:
-// https://github.com/electron/electron/issues/15877
-// So we manually configure the ~/.config/Stele/ folder the standard app logging folder.
+// Logs are saved within project folder and rotated daily.
 const baseLogPath = path.join(__dirname, 'logs');
-
-console.group('[Winston Log Settings]');
-console.log('baseLogPath:', baseLogPath);
-console.groupEnd();
-
 const logger = createLogger({
   level: 'info',
   format: format.combine(
@@ -460,8 +449,15 @@ const logger = createLogger({
   ],
 });
 
-logger.info('Test~~TN~~~yep');
+function winstonLogInfo(msg) {
+  console.log(msg);
+  logger.info(msg);
+}
 
+function winstonLogWarning(msg) {
+  console.warn(msg);
+  logger.warn(msg);
+}
 
 // Log header
 console.log('[>>------>                                           <------<<]');
@@ -470,6 +466,11 @@ console.log('[>>------>                                           <------<<]');
 
 // Print socket io settings
 console.group('[Socket.io Settings]');
-console.log('pingTimeout:', io.engine.pingTimeout);
-console.log('pingInterval:', io.engine.pingInterval);
+console.log(`pingTimeout: ${io.engine.pingTimeout}`);
+console.log(`pingInterval: ${io.engine.pingInterval}`);
+console.groupEnd();
+
+// Winston log settings
+console.group('[Winston Log Settings]');
+console.log(`baseLogPath: ${baseLogPath}`);
 console.groupEnd();
