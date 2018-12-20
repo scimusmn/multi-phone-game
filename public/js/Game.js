@@ -752,7 +752,7 @@ function Game(_mapLoader) {
       // socket communication.
       if (!DEBUG_MODE && firstFlyerAdded && socketFreezeCount > 20 && flyers.length > 0) {
         console.warn('[Warning] Not recieving controller socket messages. Reloading page.');
-        console.warn('Flyer count before reload:', flyers.length);
+        console.warn(`Flyer count before reload: ${flyers.length}`);
 
         for (let i = 0; i < flyers.length; i += 1) {
           const f = flyers[i];
@@ -947,7 +947,7 @@ function Game(_mapLoader) {
     // be a socket that was opened before
     // the game was opened.
     if (f === undefined || f === null) {
-      console.log('[Warning] Control tap sent to non-existent flyer. Id:', data.userid);
+      console.log(`[Warning] Control tap sent to non-existent flyer. Id: ${data.userid}`);
       // Let's holla back at this controller
       // and force them to reconnect...
       if (onForceDisconnectCallback) {

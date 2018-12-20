@@ -20,6 +20,10 @@ const Puid = require('puid');
 const puid = new Puid(true);
 const profanity = require('profanity-util');
 
+const { createLogger, format } = require('winston');
+const DailyRotateFile = require('winston-daily-rotate-file');
+const os = require('os');
+
 const CLIENT_CONTROLLER = 'client_controller';
 const CLIENT_SHARED_SCREEN = 'client_shared_screen';
 const CLIENT_MAINTENANCE = 'client_maintenance';
@@ -421,6 +425,42 @@ http.listen(portNumber, () => {
   console.log('port:', app.settings.port);
   console.groupEnd();
 });
+
+
+// TODO: FIND THE APPROPRIATE LOG FOLDER FOR OS
+
+// Setup file logging with Winston
+//
+// Logs are saved in the appropriate log folder for the current OS and rotated daily.
+//
+// Electron's getPath helper isn't working for Ubuntu Linux right now:
+// https://github.com/electron/electron/issues/15877
+// So we manually configure the ~/.config/Stele/ folder the standard app logging folder.
+const baseLogPath = path.join(__dirname, 'logs');
+
+console.group('[Winston Log Settings]');
+console.log('baseLogPath:', baseLogPath);
+console.groupEnd();
+
+const logger = createLogger({
+  level: 'info',
+  format: format.combine(
+    format.timestamp(),
+    format.printf(
+      info => `${info.timestamp} ${info.level}: ${info.message}`,
+    ),
+  ),
+  transports: [
+    new DailyRotateFile({
+      filename: path.join(baseLogPath, 'log-%DATE%.log'),
+      datePattern: 'YYYY-MM-DD-HH',
+      maxSize: '20m',
+      maxFiles: '90d',
+    }),
+  ],
+});
+
+logger.info('Test~~TN~~~yep');
 
 
 // Log header

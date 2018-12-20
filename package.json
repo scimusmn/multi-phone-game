@@ -9,7 +9,9 @@
     "profanity-util": "^0.2.0",
     "puid": "^1.0.5",
     "socket.io": "^2.1.1",
-    "useragent": "2.3.0"
+    "useragent": "2.3.0",
+    "winston": "^3.1.0",
+    "winston-daily-rotate-file": "^3.5.1"
   },
   "devDependencies": {
     "eslint-config-airbnb-base": "13.1.0",

@@ -1,6 +1,8 @@
 node_modules/
 public/video/*
 work/
+logs/*
+!logs/.gitkeep 
 *.webm
 *.log
 *.DS_Store
