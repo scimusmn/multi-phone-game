@@ -710,7 +710,7 @@ function Game(_mapLoader, _botFactory) {
 
     // Begin releasing asteroids
     setInterval(() => {
-      if (flyers.length > 0 && roundCountdown > 0) {
+      if (flyers.length > 0 && roundCountdown > 0 && asteroids.length < 5) {
         releaseAsteroid();
 
         // Extra asteroids for more players

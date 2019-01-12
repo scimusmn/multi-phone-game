@@ -38,7 +38,7 @@ function BotFactory(_game) {
 
       if (bot.directionCounter < 0) {
         bot.directionSwitch *= -1;
-        bot.directionCounter = Math.ceil(Math.random() * 20 + 10);
+        bot.directionCounter = Math.ceil(Math.random() * 10 + 5);
       } else {
         bot.directionCounter -= 1;
       }
@@ -58,7 +58,7 @@ function BotFactory(_game) {
       // go completely random.
       if (bot.magnitude === undefined || Math.random() < 0.1) {
         bot.magnitude = Math.random() * 0.9 + 0.1;
-      } else if (Math.random() > 0.95) {
+      } else if (Math.random() > 0.925) {
         bot.magnitude = 0.0;
         _game.controlTap(bot);
       }
@@ -108,16 +108,16 @@ function BotFactory(_game) {
     const humanPlayers = _game.getNumActivePlayers();
     // console.log('humanPlayers', humanPlayers);
 
-    if (humanPlayers < 5) {
+    if (humanPlayers < 4) {
       // Add a bot
       const botData = makeNewBot();
       _game.addPlayer(botData);
     } else {
       // Remove a bot
-      // const botData = bots.splice(0, 1);
-      // _game.removePlayer(botData);
+      const botData = bots.splice(0, 1)[0];
+      _game.removePlayer(botData);
     }
-  }, 2 * 1000);
+  }, 20 * 1000);
 
   setInterval(() => {
     setNewDirections();
