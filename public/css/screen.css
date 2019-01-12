@@ -8,6 +8,7 @@ body {
     color:#efefef;
     font: 13px Helvetica, Arial;
     background: #000;
+
     overflow: hidden;
 }
 
@@ -16,6 +17,7 @@ body {
     top: 0;
     left: 0;
     overflow: hidden;
+    background-image: url("../img/background.png");
 }
 
 #messages {
@@ -78,4 +80,11 @@ body {
     left: 1600px;
     top: 485px;
     font-size: 25px;
+}
+
+
+#background {
+    position: absolute;
+    top: 0;
+    left: 0;
 }

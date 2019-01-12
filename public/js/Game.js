@@ -230,11 +230,11 @@ function Game(_mapLoader) {
     const flyerInner = game.add.sprite(0, 0, 'led');
 
     // Inner/white
-    frames = Phaser.Animation.generateFrameNames('idle-inner', 1, 5, '.png', 0);
-    flyerInner.animations.add('idle', frames, 10, true, false);
+    // frames = Phaser.Animation.generateFrameNames('idle-inner', 1, 5, '.png', 0);
+    // flyerInner.animations.add('idle', frames, 10, true, false);
 
-    frames = Phaser.Animation.generateFrameNames('side-inner', 1, 6, '.png', 0);
-    flyerInner.animations.add('fly', frames, 10, true, false);
+    // frames = Phaser.Animation.generateFrameNames('side-inner', 1, 6, '.png', 0);
+    // flyerInner.animations.add('fly', frames, 10, true, false);
 
     flyerSprite.animations.play('fly');
     flyerSprite.tint = userColor;
@@ -261,7 +261,7 @@ function Game(_mapLoader) {
     // Combine into single flyer sprite
     flyerGroup.addChild(flyerRange);
     flyerGroup.addChild(flyerSprite);
-    flyerGroup.addChild(flyerInner);
+    // flyerGroup.addChild(flyerInner);
 
     game.physics.ninja.enableAABB(flyerGroup, false);
 
