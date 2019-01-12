@@ -5,7 +5,7 @@
 /* eslint no-param-reassign: 0 */
 
 // eslint-disable-next-line no-unused-vars
-function Game(_mapLoader) {
+function Game(_mapLoader, _botFactory) {
   /**
    * =============
    * Game Settings
@@ -1000,6 +1000,19 @@ function Game(_mapLoader) {
     flyerBrickSwipe(f);
 
     this.resetFreezeTimeout();
+  };
+
+  // How many human (non bot)
+  // players are currently active?
+  this.getNumActivePlayers = () => {
+    let count = 0;
+    flyers.forEach((flyer) => {
+      if (flyer.userid.startsWith('_BOT_') === true) {
+        count += 1;
+      }
+    });
+
+    return count;
   };
 
   /* ===============

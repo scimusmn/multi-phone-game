@@ -17,7 +17,7 @@ body {
     top: 0;
     left: 0;
     overflow: hidden;
-    background-image: url("../img/background.png");
+    /*background-image: url("../img/background.png");*/
 }
 
 #messages {
@@ -87,4 +87,5 @@ body {
     position: absolute;
     top: 0;
     left: 0;
+    display: none;
 }
