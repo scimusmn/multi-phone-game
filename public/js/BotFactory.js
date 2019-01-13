@@ -2,10 +2,10 @@
 /* eslint max-len: ["error", { "code": 100 }] */
 /* eslint-disable no-unused-vars */
 /* eslint no-undef: 0 */
+/* eslint no-param-reassign: 0 */
 
 function BotFactory(_game) {
-  const ANGLE_ADJUST_MAX = Math.PI / 5;
-  const MAGNITUDE_ADJUST_MAX = 0.2;
+  const MAX_BOT_PLAYERS = 4;
 
   const BOT_NAMES = [
     'Trygve',
@@ -16,15 +16,25 @@ function BotFactory(_game) {
     'Roger',
     'Ryan',
     'Travis',
+    'Vincent',
+    'Culhane',
+    'Zombie',
+    'Unicorn',
+    'Troll',
+    'Mountain',
   ];
 
   const bots = [];
+
+  function degreesToRadians(degrees) {
+    const pi = Math.PI;
+    return degrees * (pi / 180);
+  }
 
   function setNewDirections() {
     let degs;
     let newAngle;
     bots.forEach((bot) => {
-
       if (Math.random() < 0.6) {
         // Skip
         if (Math.random() < 0.5) _game.controlTap(bot);
@@ -67,15 +77,6 @@ function BotFactory(_game) {
     });
   }
 
-  function degreesToRadians(degrees) {
-    const pi = Math.PI;
-    return degrees * (pi / 180);
-  }
-
-  // _game.controlVector(data);
-
-  // _game.controlTap(data);
-
   function getFreshBotData() {
     const botData = {};
     const rNameIndex = Math.floor(Math.random() * BOT_NAMES.length);
@@ -106,9 +107,8 @@ function BotFactory(_game) {
   // game and add bots as needed
   setInterval(() => {
     const humanPlayers = _game.getNumActivePlayers();
-    // console.log('humanPlayers', humanPlayers);
 
-    if (humanPlayers < 4) {
+    if (humanPlayers < 2 && bots.length < MAX_BOT_PLAYERS) {
       // Add a bot
       const botData = makeNewBot();
       _game.addPlayer(botData);

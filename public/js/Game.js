@@ -636,7 +636,7 @@ function Game(_mapLoader, _botFactory) {
             onComplete: liftStun,
             onCompleteParams: [otherFlyer],
           });
-          if (stunCallback) {
+          if (stunCallback && isHuman(otherFlyer)) {
             stunCallback.call(undefined, otherFlyer.socketid);
           }
         }
@@ -756,7 +756,7 @@ function Game(_mapLoader, _botFactory) {
 
         for (let i = 0; i < flyers.length; i += 1) {
           const f = flyers[i];
-          if (onForceDisconnectCallback) {
+          if (onForceDisconnectCallback && isHuman(f)) {
             onForceDisconnectCallback.call(undefined,
               {
                 userid: f.userid,
@@ -910,7 +910,7 @@ function Game(_mapLoader, _botFactory) {
 
       // Let's holla back at this controller
       // and force them to reconnect...
-      if (onForceDisconnectCallback) {
+      if (onForceDisconnectCallback && isHuman(data)) {
         onForceDisconnectCallback.call(undefined,
           {
             userid: data.userid,
@@ -950,7 +950,7 @@ function Game(_mapLoader, _botFactory) {
       console.log(`[Warning] Control tap sent to non-existent flyer. Id: ${data.userid}`);
       // Let's holla back at this controller
       // and force them to reconnect...
-      if (onForceDisconnectCallback) {
+      if (onForceDisconnectCallback && isHuman(data)) {
         onForceDisconnectCallback.call(undefined,
           {
             userid: data.userid,
@@ -986,7 +986,7 @@ function Game(_mapLoader, _botFactory) {
       f.score += points;
 
       // Emit points event to scorer
-      if (pointsCallback) {
+      if (pointsCallback && isHuman(f) === true) {
         pointsCallback.call(undefined, f.socketid);
       }
     }
@@ -1007,7 +1007,7 @@ function Game(_mapLoader, _botFactory) {
   this.getNumActivePlayers = () => {
     let count = 0;
     flyers.forEach((flyer) => {
-      if (flyer.userid.startsWith('_BOT_') === true) {
+      if (isHuman(flyer) === true) {
         count += 1;
       }
     });
@@ -1037,7 +1037,7 @@ function Game(_mapLoader, _botFactory) {
           // Assume player has lost connection. Remove from game.
           // Emit disconnect event to node
           // 1800 frames at 60fps is about 30 seconds
-          if (onForceDisconnectCallback) {
+          if (onForceDisconnectCallback && isHuman(flyer)) {
             onForceDisconnectCallback.call(undefined,
               {
                 userid: flyer.userid,
@@ -1135,14 +1135,16 @@ function Game(_mapLoader, _botFactory) {
 
     if (flyers.length > 0) {
       // Emit win event to top-scorer
-      if (winCallback) {
+      if (winCallback && isHuman(flyers[0])) {
         winCallback.call(undefined, flyers[0].socketid);
       }
 
       // Emit lose event to every other player
       if (loseCallback) {
         for (let i = 1; i < flyers.length; i += 1) {
-          loseCallback.call(undefined, flyers[i].socketid);
+          if (isHuman(flyers[i])) {
+            loseCallback.call(undefined, flyers[i].socketid);
+          }
         }
       }
 
@@ -1319,6 +1321,13 @@ function Game(_mapLoader, _botFactory) {
       if (flyers[i].userid === id) return flyers[i];
     }
     return null;
+  }
+
+  function isHuman(flyer) {
+    if (flyer.userid.startsWith('_BOT_') === true) {
+      return false;
+    }
+    return true;
   }
 
   function removeElement(el) {
