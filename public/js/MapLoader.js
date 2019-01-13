@@ -7,15 +7,16 @@
 
 function MapLoader() {
   const MAP_CONFIGS = [
-    'Eyeballs',
-    'Generic',
-    'Mario',
-    'Minnesota',
-    'Tee',
-    'Temple',
-    'TRex',
-    'Vase',
-    'Wings',
+    // 'Eyeballs',
+    // 'Generic',
+    // 'Mario',
+    // 'Minnesota',
+    // 'Tee',
+    // 'Temple',
+    // 'TRex',
+    // 'Vase',
+    // 'Wings',
+    '19201080test',
   ];
 
   const maps = [];

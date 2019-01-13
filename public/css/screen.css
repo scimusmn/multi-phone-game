@@ -8,7 +8,6 @@ body {
     color:#efefef;
     font: 13px Helvetica, Arial;
     background: #000;
-
     overflow: hidden;
 }
 
@@ -17,7 +16,6 @@ body {
     top: 0;
     left: 0;
     overflow: hidden;
-    /*background-image: url("../img/background.png");*/
 }
 
 #messages {
@@ -52,7 +50,7 @@ body {
     left: 0px;
     top: 0px;
     font-size: 2.5em;
-    color: #fff;
+    color: #0f0;
 }
 
 #new-round {
@@ -71,7 +69,7 @@ body {
     width: 300px;
     top: 70px;
     font-size: 18em;
-    color: #fff;
+    color: #0f0;
 }
 
 #new-round #player-list {
@@ -87,5 +85,4 @@ body {
     position: absolute;
     top: 0;
     left: 0;
-    display: none;
 }

@@ -27,7 +27,7 @@ function Game(_mapLoader, _botFactory) {
   // Crown the winner of each round (dramatic)
   const CROWNS_ENABLED = true;
   const POINTS_PER_BRICK = 10;
-  const GAME_STAGE_WIDTH = 1666;
+  const GAME_STAGE_WIDTH = 1920;
   const GAME_STAGE_HEIGHT = 1080;
 
   const thisRef = this;
@@ -38,7 +38,7 @@ function Game(_mapLoader, _botFactory) {
   let stageBounds = {};
   let roundCountdown = -LOBBY_DURATION;
   let socketFreezeCount = 0;
-  let firstFlyerAdded = false;
+  let firstHumanFlyerAdded = false;
 
   // Callback methods usded
   let onForceDisconnectCallback;
@@ -750,7 +750,7 @@ function Game(_mapLoader, _botFactory) {
       // Increment count to monitor
       // how long it's been since last
       // socket communication.
-      if (!DEBUG_MODE && firstFlyerAdded && socketFreezeCount > 20 && flyers.length > 0) {
+      if (!DEBUG_MODE && firstHumanFlyerAdded && socketFreezeCount > 20 && flyers.length > 0) {
         console.warn('[Warning] Not recieving controller socket messages. Reloading page.');
         console.warn(`Flyer count before reload: ${flyers.length}`);
 
@@ -804,7 +804,8 @@ function Game(_mapLoader, _botFactory) {
     const flyerDiv = $(`#flyer_${data.userid}`);
 
     // Pop in
-    const startX = Math.random() * (stageBounds.right - 100) + 50;
+    let startX = 100 + (Math.random() * 300);
+    if (Math.random() < 0.5) startX = (stageBounds.right - 100) - (Math.random() * 300);
     const startY = Math.random() * (stageBounds.floor - 300) + 50;
     TweenLite.set($(flyerDiv), { css: { left: startX, top: startY } });
     TweenLite.from($(flyerDiv), 1, { css: { scale: 0 }, ease: Elastic.easeOut });
@@ -857,7 +858,8 @@ function Game(_mapLoader, _botFactory) {
 
     flyers.push(newFlyer);
 
-    firstFlyerAdded = true;
+    if (isHuman(newFlyer)) firstHumanFlyerAdded = true;
+
     this.resetFreezeTimeout();
   };
 
