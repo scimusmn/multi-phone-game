@@ -13,7 +13,8 @@ $(document).ready(() => {
 
   // Holds password to restrict access.
   // Optionally filled by command flag
-  let MAINTENANCE_ENTRY_PW;
+  // (TEMP) will come from config file.
+  const MAINTENANCE_ENTRY_PW = 'Lasley';
 
   /**
    * Listen for useful socket.io events
@@ -59,6 +60,7 @@ $(document).ready(() => {
         register();
       } else {
         addLog('Incorrect password entered.');
+        document.querySelector('#btn-container').style.display = 'none';
       }
     } else {
       register();
@@ -73,6 +75,12 @@ $(document).ready(() => {
   document.getElementById('restart-btn').addEventListener('click', () => {
     goRestartGameServer();
     addLog('Server restart request sent...');
+
+    // Reconnect this page in 15 secs post server restart
+    addLog('This page will reconnect in 15 seconds');
+    setTimeout(() => {
+      window.location.reload(true);
+    }, 15000);
   });
 
   // Kick things off

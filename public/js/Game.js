@@ -16,10 +16,10 @@ function Game(_mapLoader, _botFactory) {
   const DEBUG_MODE = false;
 
   // Duration of gameplay rounds in seconds
-  const ROUND_DURATION = 75;
+  const ROUND_DURATION = 61;
 
   // Duration between rounds in seconds
-  const LOBBY_DURATION = 30;
+  const LOBBY_DURATION = 31;
 
   // Allow players to stun eachother
   const STUNS_ENABLED = true;

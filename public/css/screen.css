@@ -1,3 +1,12 @@
+@font-face {
+    font-family: 'Detroit05Base';
+    src: url('../fonts/Detroit05Base.woff') format('woff'), /* Modern Browsers */
+         url('../fonts/Detroit05Base.ttf') format('truetype'); /* Legacy iOS */
+    font-style: normal;
+    font-weight: normal;
+    text-rendering: optimizeLegibility;
+}
+
 * {
     margin: 0;
     padding: 0;
@@ -31,12 +40,14 @@ body {
 #game-countdown {
     position: absolute;
     text-align: center;
-    right: 56px;
-    top: 425px;
+    right: 18px;
+    top: 14px;
     width: 150px;
-    font-size: 11em;
+    font-size: 12em;
     padding: 5px 5px 70px 5px;
     z-index: 0;
+    font-family: 'Detroit05Base';
+    color: #fff;
 }
 
 #game-countdown.show {
@@ -65,18 +76,19 @@ body {
 #new-round #round-countdown {
     position: absolute;
     text-align: center;
-    right: 40px;
+    right: 32px;
     width: 300px;
-    top: 70px;
-    font-size: 18em;
-    color: #0f0;
+    top: 100px;
+    font-size: 17em;
+    color: #fff;
+    font-family: 'Detroit05Base';
 }
 
 #new-round #player-list {
     position: absolute;
     text-align: left;
-    left: 1600px;
-    top: 485px;
+    left: 1623px;
+    top: 495px;
     font-size: 25px;
 }
 
