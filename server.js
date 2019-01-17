@@ -413,6 +413,8 @@ io.on('connection', (socket) => {
     }
     console.groupEnd();
 
+    winstonLogInfo(`[Info] Maintenance event recieved: ${data.type}`);
+
     // Forward to game screen
     if (!sharedScreenConnected) return;
     io.sockets.connected[sharedScreenSID].emit('maintenance-event', data);
