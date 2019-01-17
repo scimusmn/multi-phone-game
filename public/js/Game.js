@@ -178,6 +178,10 @@ function Game(_mapLoader, _botFactory) {
         }, 2000);
       }
     }
+
+    // Let's immediately hide game assets
+    // and begin in new round screen
+    endRound();
   }
 
   function setupCrownDisplays() {
@@ -227,27 +231,12 @@ function Game(_mapLoader, _botFactory) {
     frames = Phaser.Animation.generateFrameNames('side_', 1, 6, '.png', 4);
     flyerSprite.animations.add('fly', frames, 10, true, false);
 
-    const flyerInner = game.add.sprite(0, 0, 'led');
-
-    // Inner/white
-    // frames = Phaser.Animation.generateFrameNames('idle-inner', 1, 5, '.png', 0);
-    // flyerInner.animations.add('idle', frames, 10, true, false);
-
-    // frames = Phaser.Animation.generateFrameNames('side-inner', 1, 6, '.png', 0);
-    // flyerInner.animations.add('fly', frames, 10, true, false);
-
     flyerSprite.animations.play('fly');
     flyerSprite.tint = userColor;
     flyerSprite.setScaleMinMax(-0.8, 0.8, 0.8, 0.8);
 
     flyerSprite.anchor.x = 0.5;
     flyerSprite.anchor.y = 0.5;
-
-    flyerInner.anchor.x = 0.5;
-    flyerInner.anchor.y = 0.48;
-
-    flyerInner.animations.play('fly');
-    flyerInner.setScaleMinMax(-0.8, 0.8, 0.8, 0.8);
 
     // Swipe collision object.
     const flyerRange = game.add.sprite(0, 0, '');
@@ -261,7 +250,6 @@ function Game(_mapLoader, _botFactory) {
     // Combine into single flyer sprite
     flyerGroup.addChild(flyerRange);
     flyerGroup.addChild(flyerSprite);
-    // flyerGroup.addChild(flyerInner);
 
     game.physics.ninja.enableAABB(flyerGroup, false);
 
@@ -280,7 +268,7 @@ function Game(_mapLoader, _botFactory) {
     // Default is 0.3
     flyerGroup.body.bounce = 0.36;
 
-    return [flyerGroup.body, flyerSprite, flyerInner];
+    return [flyerGroup.body, flyerSprite];
   }
 
   function phaserUpdate() {
@@ -300,15 +288,12 @@ function Game(_mapLoader, _botFactory) {
     const f = flyer;
     const fBody = f.phaserBody;
     const fSprite = f.phaserSprite;
-    const fInner = f.phaserInner;
 
     if (f.ax < 0) {
       fBody.moveLeft(flyerSpeedHorizontal * Math.abs(f.ax));
       fSprite.animations.play('fly');
-      fInner.animations.play('fly');
       f.dir = -1.0;
       fSprite.scale.setTo(f.dir, 1.0);
-      fInner.scale.setTo(-f.dir, 1.0);
       if (f.crowned === true) {
         winnerCrown.angle = -40;
         winnerCrown.anchor.x = 1.0;
@@ -317,10 +302,8 @@ function Game(_mapLoader, _botFactory) {
     } else if (f.ax > 0) {
       fBody.moveRight(flyerSpeedHorizontal * Math.abs(f.ax));
       fSprite.animations.play('fly');
-      fInner.animations.play('fly');
       f.dir = 1.0;
       fSprite.scale.setTo(f.dir, 1.0);
-      fInner.scale.setTo(-f.dir, 1.0);
       if (f.crowned === true) {
         winnerCrown.angle = 40;
         winnerCrown.anchor.x = 0.0;
@@ -328,7 +311,6 @@ function Game(_mapLoader, _botFactory) {
       }
     } else {
       fSprite.animations.play('idle');
-      fInner.animations.play('idle');
       if (f.crowned === true) {
         winnerCrown.angle = 0;
         winnerCrown.anchor.x = 0.5;
@@ -750,7 +732,7 @@ function Game(_mapLoader, _botFactory) {
       // Increment count to monitor
       // how long it's been since last
       // socket communication.
-      if (!DEBUG_MODE && firstHumanFlyerAdded && socketFreezeCount > 20 && flyers.length > 0) {
+      if (!DEBUG_MODE && firstHumanFlyerAdded && socketFreezeCount > 30 && flyers.length > 0) {
         console.warn('[Warning] Not recieving controller socket messages. Reloading page.');
         console.warn(`Flyer count before reload: ${flyers.length}`);
 
@@ -827,7 +809,6 @@ function Game(_mapLoader, _botFactory) {
     const phaserObj = addPhaserBody(data);
     const pBody = phaserObj[0];
     const pSprite = phaserObj[1];
-    const pInner = phaserObj[2];
 
     // Add to game loop
     const newFlyer = {
@@ -839,7 +820,6 @@ function Game(_mapLoader, _botFactory) {
       fistDiv: $(flyerDiv).children('#fist'),
       phaserBody: pBody,
       phaserSprite: pSprite,
-      phaserInner: pInner,
       nickname: data.nickname,
       color: data.usercolor,
       deadCount: 0,
@@ -858,9 +838,10 @@ function Game(_mapLoader, _botFactory) {
 
     flyers.push(newFlyer);
 
-    if (isHuman(newFlyer)) firstHumanFlyerAdded = true;
-
-    this.resetFreezeTimeout();
+    if (isHuman(newFlyer)) {
+      firstHumanFlyerAdded = true;
+      this.resetFreezeTimeout();
+    }
   };
 
   this.removePlayer = (data) => {
@@ -938,7 +919,14 @@ function Game(_mapLoader, _botFactory) {
     f.ax = Math.cos(data.angle) * data.magnitude;
     f.ay = Math.sin(data.angle) * data.magnitude;
 
-    this.resetFreezeTimeout();
+    // Commenting out because I think
+    // reseting the freeze timeout only
+    // on tap actions is enough to know
+    // whether the connection is still valid
+    // -tn
+    // if (isHuman(f)) {
+    //   this.resetFreezeTimeout();
+    // }
   };
 
   this.controlTap = (data) => {
@@ -1001,7 +989,9 @@ function Game(_mapLoader, _botFactory) {
     // Phaser attempt swipe (for bricks)
     flyerBrickSwipe(f);
 
-    this.resetFreezeTimeout();
+    if (isHuman(f)) {
+      this.resetFreezeTimeout();
+    }
   };
 
   // How many human (non bot)
@@ -1326,7 +1316,7 @@ function Game(_mapLoader, _botFactory) {
   }
 
   function isHuman(flyer) {
-    if (flyer.userid.startsWith('_BOT_') === true) {
+    if (flyer.userid.startsWith('_BOT') === true) {
       return false;
     }
     return true;
