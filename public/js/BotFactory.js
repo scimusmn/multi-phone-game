@@ -5,12 +5,11 @@
 /* eslint no-param-reassign: 0 */
 
 function BotFactory(_game) {
-  const MAX_BOT_PLAYERS = 4;
-
   const BOT_NAMES = [
     'Trygve',
     'Elias',
     'Manuel',
+    'Annie',
     'Annie',
     'Bryan',
     'Roger',
@@ -23,7 +22,10 @@ function BotFactory(_game) {
     'Troll',
     'Mountain',
     'Gail',
+    'Gail',
     'Christina',
+    'Christina',
+    'Carla',
     'Carla',
     'Orin',
     'Rick',
@@ -45,6 +47,7 @@ function BotFactory(_game) {
   ];
 
   const bots = [];
+  let maxBotPlayers = 6;
 
   function degreesToRadians(degrees) {
     const pi = Math.PI;
@@ -123,12 +126,16 @@ function BotFactory(_game) {
     return newBot;
   }
 
+  function setMaxBots(val) {
+    maxBotPlayers = val;
+  }
+
   // Check occasionally for a dead
   // game and add bots as needed
   setInterval(() => {
     const humanPlayers = _game.getNumActivePlayers();
 
-    if (humanPlayers < 2 && bots.length < MAX_BOT_PLAYERS) {
+    if (humanPlayers < 2 && bots.length < maxBotPlayers) {
       // Add a bot
       const botData = makeNewBot();
       _game.addPlayer(botData);
@@ -146,5 +153,6 @@ function BotFactory(_game) {
 
   return {
     makeNewBot,
+    setMaxBots,
   };
 }

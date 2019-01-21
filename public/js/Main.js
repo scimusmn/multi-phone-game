@@ -10,6 +10,7 @@ $(document).ready(() => {
   const game = new Game(mapLoader);
 
   const botFactory = new BotFactory(game);
+  botFactory.setMaxBots(4);
 
   // Let socket.io know this is the shared screen client
   socket.emit('register', { usertype: 'client_shared_screen' });
@@ -59,7 +60,7 @@ $(document).ready(() => {
     const pongDelay = Date.now() - data.timestamp;
     pongCounter -= 1;
     if (pongDelay > 500 || pongCounter >= 2) {
-      console.warn('[Warning] Pongs not returning quickly from server', pongDelay, pongCounter);
+      console.warn(`[Warning] Slow server pong. delay:${pongDelay}, counter:${pongCounter}`);
     }
   });
 

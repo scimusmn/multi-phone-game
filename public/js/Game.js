@@ -867,11 +867,11 @@ function Game(_mapLoader, _botFactory) {
 
       // Remove Phaser sprite
       flyer.phaserBody.sprite.destroy();
-    }
 
-    // Remove from flyers array.
-    for (i = flyers.length - 1; i >= 0; i -= 1) {
-      if (flyers[i].userid === data.userid) flyers.splice(i, 1);
+      // Remove from flyers array.
+      for (i = flyers.length - 1; i >= 0; i -= 1) {
+        if (flyers[i].userid === flyer.userid) flyers.splice(i, 1);
+      }
     }
   };
 
@@ -1316,8 +1316,10 @@ function Game(_mapLoader, _botFactory) {
   }
 
   function isHuman(flyer) {
-    if (flyer.userid.startsWith('_BOT') === true) {
-      return false;
+    if (flyer && flyer.userid) {
+      if (flyer.userid.startsWith('_BOT') === true) {
+        return false;
+      }
     }
     return true;
   }
