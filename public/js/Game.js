@@ -98,7 +98,7 @@ function Game(_mapLoader, _botFactory) {
     game.load.image('block-damaged', 'img/sprites/block-damaged.png');
     game.load.image('block-damaged-2', 'img/sprites/block-damaged-2.png');
     game.load.image('block-piece', 'img/sprites/block-piece.png');
-    game.load.image('crown', 'img/sprites/crown.png');
+    game.load.image('crown', 'img/hero_fist_gold.png');
 
     // Load LED spritesheet and config
     game.load.atlasJSONHash('led', 'img/sprites/led.png', 'img/sprites/led.json');
@@ -171,12 +171,6 @@ function Game(_mapLoader, _botFactory) {
 
     if (DEBUG_MODE === true) {
       thisRef.addPlayer(debugFlyerData);
-
-      if (CROWNS_ENABLED === true) {
-        setTimeout(() => {
-          crownWinner(flyers[0]);
-        }, 2000);
-      }
     }
 
     // Let's immediately hide game assets
@@ -294,28 +288,28 @@ function Game(_mapLoader, _botFactory) {
       fSprite.animations.play('fly');
       f.dir = -1.0;
       fSprite.scale.setTo(f.dir, 1.0);
-      if (f.crowned === true) {
-        winnerCrown.angle = -40;
-        winnerCrown.anchor.x = 1.0;
-        winnerCrown.anchor.y = 2.6;
-      }
+      // if (f.crowned === true) {
+      //   winnerCrown.angle = -40;
+      //   winnerCrown.anchor.x = 1.0;
+      //   winnerCrown.anchor.y = 2.6;
+      // }
     } else if (f.ax > 0) {
       fBody.moveRight(flyerSpeedHorizontal * Math.abs(f.ax));
       fSprite.animations.play('fly');
       f.dir = 1.0;
       fSprite.scale.setTo(f.dir, 1.0);
-      if (f.crowned === true) {
-        winnerCrown.angle = 40;
-        winnerCrown.anchor.x = 0.0;
-        winnerCrown.anchor.y = 2.6;
-      }
+      // if (f.crowned === true) {
+      //   winnerCrown.angle = 40;
+      //   winnerCrown.anchor.x = 0.0;
+      //   winnerCrown.anchor.y = 2.6;
+      // }
     } else {
       fSprite.animations.play('idle');
-      if (f.crowned === true) {
-        winnerCrown.angle = 0;
-        winnerCrown.anchor.x = 0.5;
-        winnerCrown.anchor.y = 2.25;
-      }
+      // if (f.crowned === true) {
+      //   winnerCrown.angle = 0;
+      //   winnerCrown.anchor.x = 0.5;
+      //   winnerCrown.anchor.y = 2.25;
+      // }
     }
 
     // Update crown display
@@ -357,7 +351,7 @@ function Game(_mapLoader, _botFactory) {
       winnerCrown.anchor.y = 0.5;
 
 
-      const mappedScale = mapRange(crowningOffset, 2.9, 20.0, 0.14, 0.74);
+      const mappedScale = mapRange(crowningOffset, 2.9, 20.0, 0.5, 1.0);
       winnerCrown.scale.setTo(mappedScale, mappedScale);
 
       winnerCrown.y = -crowningOffset * 30;
@@ -477,13 +471,13 @@ function Game(_mapLoader, _botFactory) {
     }
   }
 
-  function crownWinner(flyer) {
+  function crownWinners(flyerGold, flyerSilver, flyerBronze) {
     // Start with large offset for
     // holy knighting onto character
     crowningOffset = 20.0;
 
     for (let i = 0; i < flyers.length; i += 1) {
-      if (flyer === flyers[i]) {
+      if (flyerGold === flyers[i]) {
         flyers[i].crowned = true;
         winnerCrown.visible = true;
         flyers[i].phaserBody.sprite.addChild(winnerCrown);
@@ -491,12 +485,25 @@ function Game(_mapLoader, _botFactory) {
         const userColor = parseInt(flyers[i].color.replace(/^#/, ''), 16);
         crownLightBeams[0].tint = userColor;
 
+        // Swap in gold hammer img
+        $(flyers[i].fistDiv).attr('src', 'img/hero_fist_gold.png');
+
         // Show beams of light
         for (let l = 0; l < crownLightBeams.length; l += 1) {
           crownLightBeams[l].visible = true;
         }
-      } else {
+      } else if (flyerSilver === flyers[i]) {
+        // Swap in silver hammer img
         flyers[i].crowned = false;
+        $(flyers[i].fistDiv).attr('src', 'img/hero_fist_silver.png');
+      } else if (flyerBronze === flyers[i]) {
+        // Swap in bronze hammer img
+        flyers[i].crowned = false;
+        $(flyers[i].fistDiv).attr('src', 'img/hero_fist_bronze.png');
+      } else {
+        // Swap in default hammer img
+        flyers[i].crowned = false;
+        $(flyers[i].fistDiv).attr('src', 'img/hero_fist.png');
       }
     }
   }
@@ -1141,7 +1148,7 @@ function Game(_mapLoader, _botFactory) {
       }
 
       if (CROWNS_ENABLED === true) {
-        crownWinner(flyers[0]);
+        crownWinners(flyers[0], flyers[1], flyers[2]);
       }
     }
   }
@@ -1159,8 +1166,14 @@ function Game(_mapLoader, _botFactory) {
                           + `${flyers[i].nickname} </span> &nbsp; ${flyers[i].score}`;
 
         // Include crown icon for first place
-        if (CROWNS_ENABLED === true && i === 0) {
-          htmlString += ' &nbsp;  <img width="40px" src="img/sprites/crown.png"/>';
+        if (CROWNS_ENABLED === true) {
+          if (i === 0) {
+            htmlString += ' &nbsp;  <img width="40px" src="img/hero_fist_gold.png"/>';
+          } else if (i === 1) {
+            htmlString += ' &nbsp;  <img width="40px" src="img/hero_fist_silver.png"/>';
+          } else if (i === 2) {
+            htmlString += ' &nbsp;  <img width="40px" src="img/hero_fist_bronze.png"/>';
+          }
         }
         $('#player-list').append($('<li>').html(htmlString));
       }

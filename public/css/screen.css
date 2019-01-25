@@ -92,6 +92,11 @@ body {
     font-size: 25px;
 }
 
+#controller-vid-loop {
+    position: absolute;
+    left: 54px;
+    top: 40px;
+}
 
 #background {
     position: absolute;
