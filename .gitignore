@@ -1,5 +1,4 @@
 node_modules/
-public/video/*
 work/
 logs/*
 !logs/.gitkeep 
