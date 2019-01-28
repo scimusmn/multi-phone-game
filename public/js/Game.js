@@ -13,13 +13,13 @@ function Game(_mapLoader, _botFactory) {
    */
   // Add keyboard controllable character
   // Show in-game visual feedback
-  const DEBUG_MODE = false;
+  const DEBUG_MODE = true;
 
   // Duration of gameplay rounds in seconds
   const ROUND_DURATION = 61;
 
   // Duration between rounds in seconds
-  const LOBBY_DURATION = 31;
+  const LOBBY_DURATION = 5;
 
   // Allow players to stun eachother
   const STUNS_ENABLED = true;
@@ -87,25 +87,47 @@ function Game(_mapLoader, _botFactory) {
   let crowningOffset;
   const crownLightBeams = [];
   let brickEmitter;
+  let goldEmitter;
+  let numBricksSmashed = 0;
+  const brickMilestones = { whiteBricks: 0, logoBricks: 0, goldBricks: 0 };
 
   function phaserPreload() {
     // Prevent game from pausing when browser loses focus
     game.stage.disableVisibilityChange = true;
 
     // Preload game assets
-    game.load.image('block', 'img/sprites/block.png');
+    game.load.image('block-intact', 'img/sprites/block.png');
     game.load.image('block-fade', 'img/sprites/block-fade.png');
     game.load.image('block-damaged', 'img/sprites/block-damaged.png');
     game.load.image('block-damaged-2', 'img/sprites/block-damaged-2.png');
     game.load.image('block-piece', 'img/sprites/block-piece.png');
+    game.load.image('block-piece-gold', 'img/sprites/block-piece-gold.png');
+    game.load.image('logo-block', 'img/sprites/logo-block.png');
     game.load.image('crown', 'img/hero_fist_gold.png');
+
+    // Load all shapes for logo bricks
+    for (let i = 0; i < 8; i += 1) {
+      const paneId = `logo_pane_${i}`;
+      game.load.image(paneId, `img/sprites/logo/${paneId}.png`);
+    }
 
     // Load LED spritesheet and config
     game.load.atlasJSONHash('led', 'img/sprites/led.png', 'img/sprites/led.json');
   }
 
   function clearAllBricks() {
+    // Show all logo shapes
+    brickPlatforms.forEach((brick) => {
+      if (brick.key === '__default') {
+        $(brick.brickInfo.ref).show();
+        TweenLite.set($(brick.brickInfo.ref), { css: { rotation: 0, opacity: 1.0 } });
+      }
+    });
+
+    // Clear any bricks that remain
     brickPlatforms.removeAll(true);
+
+    numBricksSmashed = 0;
   }
 
   function createBrickPlatforms() {
@@ -120,11 +142,12 @@ function Game(_mapLoader, _botFactory) {
     // Retrieve array of all brick objects
     const brickRects = _mapLoader.getRandomBrickMap();
 
+    // Add a brick rect for every json object
     for (let i = 0; i < brickRects.length; i += 1) {
       const br = brickRects[i];
 
       // Add to Phaser display engine
-      const platform = brickPlatforms.create(br.x, br.y, 'block');
+      const platform = brickPlatforms.create(br.x, br.y, 'block-intact');
       platform.width = br.w;
       platform.height = br.h;
 
@@ -133,6 +156,33 @@ function Game(_mapLoader, _botFactory) {
       platform.body.immovable = true;
       platform.body.gravityScale = 0;
     }
+
+    // Remember how many white bricks are in this map
+    brickMilestones.whiteBricks = brickRects.length;
+
+    const logoBricks = _mapLoader.getLogoShapes();
+    let logoCount = 0;
+    let goldCount = 0;
+    for (let i = 0; i < logoBricks.length; i += 1) {
+      const br = logoBricks[i];
+
+      if (br.type === 'pane') {
+        logoCount += 1;
+      } else if (br.type === 'gold') {
+        goldCount += 1;
+      }
+
+      // Add to Phaser display engine
+      const platform = brickPlatforms.create(br.x, br.y);
+      platform.width = br.w;
+      platform.height = br.h;
+      platform.brickInfo = br;
+      platform.brickInfo.health = 1.0;
+    }
+
+    // Remember how many logo bricks are in this map
+    brickMilestones.logoBricks = logoCount + brickMilestones.whiteBricks;
+    brickMilestones.goldBricks = goldCount + brickMilestones.logoBricks;
   }
 
   function phaserCreate() {
@@ -154,14 +204,17 @@ function Game(_mapLoader, _botFactory) {
     }
 
     // Prepare particle effects
-    brickEmitter = game.add.emitter(0, 0, 100);
+    brickEmitter = setupBrickEmitter('block-piece');
+    goldEmitter = setupBrickEmitter('block-piece-gold');
+
+    /* brickEmitter = game.add.emitter(0, 0, 100);
     brickEmitter.physicsBodyType = Phaser.Physics.NINJA;
     brickEmitter.enableBody = true;
     brickEmitter.makeParticles('block-piece', 0, 100, true, true);
     brickEmitter.gravity = 620;
     brickEmitter.bounce.setTo(0.4, 0.6);
     brickEmitter.setScale(0.25, 0.45, 0.25, 0.45);
-    brickEmitter.setAlpha(0.45, 0.85);
+    brickEmitter.setAlpha(0.45, 0.85); */
 
     // Game objects
     allFlyersGroup = game.add.group();
@@ -176,6 +229,19 @@ function Game(_mapLoader, _botFactory) {
     // Let's immediately hide game assets
     // and begin in new round screen
     endRound();
+  }
+
+  function setupBrickEmitter(srcKey) {
+    const emitter = game.add.emitter(0, 0, 100);
+    emitter.physicsBodyType = Phaser.Physics.NINJA;
+    emitter.enableBody = true;
+    emitter.makeParticles(srcKey, 0, 100, true, true);
+    emitter.gravity = 620;
+    emitter.bounce.setTo(0.4, 0.6);
+    emitter.setScale(0.25, 0.45, 0.25, 0.45);
+    emitter.setAlpha(0.45, 0.85);
+
+    return emitter;
   }
 
   function setupCrownDisplays() {
@@ -512,7 +578,7 @@ function Game(_mapLoader, _botFactory) {
     // Detect if any bricks were hit
 
     // Default to swing from upper left of flyer
-    const swipeRadius = 50;
+    const swipeRadius = 50; // 50;
     const swipeCircle = {
       x: f.phaserBody.x,
       y: f.phaserBody.y + (f.phaserBody.height * 0.125),
@@ -547,12 +613,52 @@ function Game(_mapLoader, _botFactory) {
   }
 
   function damageBrick(brick, flyer) {
-    if (brick.key === 'block') {
+    if (brick.key.endsWith('intact')) {
       brick.loadTexture('block-damaged');
-    } else if (brick.key === 'block-damaged') {
+    } else if (brick.key.endsWith('damaged')) {
       brick.loadTexture('block-damaged-2');
     } else {
+      let wasGold = false;
+
+      // Did not come from map, and has no img
+      // which means it's part of svg logo
+      if (brick.key === '__default') {
+        // Do not allow smashing of logo panes until
+        // all bricks are gone
+        if (numBricksSmashed < brickMilestones.whiteBricks) {
+          return;
+        }
+        // All white bricks have been smashed
+        if (brick.brickInfo.type === 'pane') {
+          if (brick.brickInfo.health > 0.75) {
+            brick.brickInfo.health -= 0.125;
+            TweenLite.set($(brick.brickInfo.ref), {
+              css: { opacity: brick.brickInfo.health, rotation: `+=${Math.random() * 18 - 9}` },
+            });
+            return;
+          }
+          $(brick.brickInfo.ref).hide();
+        } else if (brick.brickInfo.type === 'gold') {
+          if (numBricksSmashed < brickMilestones.logoBricks) {
+            return;
+          }
+          if (brick.brickInfo.health > 0.75) {
+            brick.brickInfo.health -= 0.125;
+            TweenLite.set($(brick.brickInfo.ref), {
+              css: { opacity: brick.brickInfo.health, rotation: `+=${Math.random() * 20 - 10}` },
+            });
+            return;
+          }
+          $(brick.brickInfo.ref).hide();
+          wasGold = true;
+        } else {
+          console.log(`Unrecognized brick. key:${brick.key}, type:${brick.brickInfo.type}`);
+          console.log(`smashed: ${numBricksSmashed}, goldBricks: ${brickMilestones.goldBricks}`);
+        }
+      }
+
       brick.kill();
+      numBricksSmashed += 1;
 
       // TODO: If we don't plan to
       // turn this brick back 'on'
@@ -569,20 +675,24 @@ function Game(_mapLoader, _botFactory) {
       }
 
       // Release shattered bricks
-      particleBrickBurst(brick.x, brick.y, flyer.dir);
+      if (wasGold) {
+        particleBrickBurst(goldEmitter, brick.x, brick.y, flyer.dir);
+      } else {
+        particleBrickBurst(brickEmitter, brick.x, brick.y, flyer.dir);
+      }
     }
   }
 
-  function particleBrickBurst(x, y, dir) {
+  function particleBrickBurst(emitter, x, y, dir) {
     // Position the emitter where event occurred
-    brickEmitter.x = x;
-    brickEmitter.y = y;
+    emitter.x = x;
+    emitter.y = y;
 
     // Randomize initial particle x velocities
-    brickEmitter.setXSpeed(20 * dir, 400 * dir);
+    emitter.setXSpeed(20 * dir, 400 * dir);
 
     // Release all particles at once
-    brickEmitter.explode(5555, Math.round(Math.random() * 2 + 3));
+    emitter.explode(5555, Math.round(Math.random() * 2 + 3));
   }
 
   function attemptStun(attackingFlyer) {
@@ -1080,7 +1190,7 @@ function Game(_mapLoader, _botFactory) {
           releasePoints(damageDealt, ptColor, aL - 10, aT - (ast.diam * 0.5) + 3, smashDir);
         } else {
           // Monster asteroid requires multiple swings
-          damageDealt = 10 + Math.ceil(Math.random() * 15);
+          damageDealt = 15 + Math.ceil(Math.random() * 15);
           ast.health -= damageDealt;
           releasePoints(damageDealt, ptColor, aL - 10, aT - (ast.diam * 0.5) - 10, 0);
         }
@@ -1250,7 +1360,7 @@ function Game(_mapLoader, _botFactory) {
 
     TweenLite.set($(aDiv), { css: { scale, left: startX, top: startY } });
 
-    const health = roundToNearest(diam / 2, 5);
+    const health = roundToNearest(diam / 1.7, 5);
 
     // Pop in
     TweenLite.from($(aDiv), 1.5, { css: { scale: 0, opacity: 0 }, ease: Elastic.easeOut });

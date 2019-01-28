@@ -1,6 +1,7 @@
 /* eslint no-console: 0 */
 /* eslint max-len: ["error", { "code": 100 }] */
 /* eslint-disable no-unused-vars */
+/* eslint func-names: 0 */
 
 // Map brick arrays can be exported from the brick-mapper system
 // (https://github.com/scimusmn/brick-mapper)
@@ -17,9 +18,9 @@ function MapLoader() {
     // 'Vase',
     // 'Wings',
     // '19201080test',
-    'CliffsNRamps',
+    // 'CliffsNRamps',
     // 'Pillars',
-    'HangingVines',
+    // 'HangingVines',
     'BasicWide',
     // 'SnakeCharmer',
   ];
@@ -47,6 +48,54 @@ function MapLoader() {
     return {};
   }
 
+  /* LOGO SHAPES */
+  const logoPath = 'img/gc_logo.svg';
+  const logoShapes = [];
+  const svgScale = 0.144675;
+
+  // Load external SVG file
+  $.get(logoPath, (svg) => {
+    const svgRef = $('#svg-container').append(svg);
+
+    const offsetLeft = parseInt($(svgRef).children('svg').css('left'), 10);
+    const offsetTop = parseInt($(svgRef).children('svg').css('top'), 10);
+
+    const panesGroup = $(svgRef).children().children('#panes');
+    const goldsGroup = $(svgRef).children().children('#golds');
+    const staticsGroup = $(svgRef).children().children('#statics');
+
+    $(panesGroup).children().each(function () {
+      const boundsBox = $(this)[0].getBBox();
+      const shapeObj = {
+        ref: $(this),
+        type: 'pane',
+        x: (boundsBox.x * svgScale) + offsetLeft,
+        y: (boundsBox.y * svgScale) + offsetTop,
+        w: boundsBox.width * svgScale,
+        h: boundsBox.height * svgScale,
+      };
+      logoShapes.push(shapeObj);
+    });
+
+    $(goldsGroup).children().each(function () {
+      const boundsBox = $(this)[0].getBBox();
+      const shapeObj = {
+        ref: $(this),
+        type: 'gold',
+        x: (boundsBox.x * svgScale) + offsetLeft,
+        y: (boundsBox.y * svgScale) + offsetTop,
+        w: boundsBox.width * svgScale,
+        h: boundsBox.height * svgScale,
+      };
+      logoShapes.push(shapeObj);
+    });
+  }, 'text');
+
+
+  function getLogoShapes() {
+    return logoShapes;
+  }
+
   // Load all maps in map_configs
   for (let i = 0; i < MAP_CONFIGS.length; i += 1) {
   // Send AJAX request to each individual JSON file
@@ -66,5 +115,6 @@ function MapLoader() {
 
   return {
     getRandomBrickMap,
+    getLogoShapes,
   };
 }
