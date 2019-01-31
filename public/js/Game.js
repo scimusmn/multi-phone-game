@@ -13,13 +13,13 @@ function Game(_mapLoader, _botFactory) {
    */
   // Add keyboard controllable character
   // Show in-game visual feedback
-  const DEBUG_MODE = true;
+  const DEBUG_MODE = false;
 
   // Duration of gameplay rounds in seconds
-  const ROUND_DURATION = 61;
+  const ROUND_DURATION = 70;
 
   // Duration between rounds in seconds
-  const LOBBY_DURATION = 5;
+  const LOBBY_DURATION = 30; // /25;
 
   // Allow players to stun eachother
   const STUNS_ENABLED = true;
@@ -104,12 +104,6 @@ function Game(_mapLoader, _botFactory) {
     game.load.image('block-piece-gold', 'img/sprites/block-piece-gold.png');
     game.load.image('logo-block', 'img/sprites/logo-block.png');
     game.load.image('crown', 'img/hero_fist_gold.png');
-
-    // Load all shapes for logo bricks
-    for (let i = 0; i < 8; i += 1) {
-      const paneId = `logo_pane_${i}`;
-      game.load.image(paneId, `img/sprites/logo/${paneId}.png`);
-    }
 
     // Load LED spritesheet and config
     game.load.atlasJSONHash('led', 'img/sprites/led.png', 'img/sprites/led.json');
@@ -396,7 +390,7 @@ function Game(_mapLoader, _botFactory) {
     // Default
     winnerCrown.y = 0;
 
-    if (f.ax < 0) {
+   /* if (f.ax < 0) {
       winnerCrown.angle = -40;
       winnerCrown.anchor.x = 0.9;
       winnerCrown.anchor.y = 2.6;
@@ -409,7 +403,7 @@ function Game(_mapLoader, _botFactory) {
       winnerCrown.anchor.x = 0.525;
       winnerCrown.anchor.y = 2.25;
     }
-
+*/
     // Crown new winner animation
     if (roundCountdown < 0 && crowningOffset !== -1.0) {
       winnerCrown.angle = 0;
@@ -417,7 +411,7 @@ function Game(_mapLoader, _botFactory) {
       winnerCrown.anchor.y = 0.5;
 
 
-      const mappedScale = mapRange(crowningOffset, 2.9, 20.0, 0.5, 1.0);
+      const mappedScale = mapRange(crowningOffset, 2.9, 20.0, 0.65, 1.5);
       winnerCrown.scale.setTo(mappedScale, mappedScale);
 
       winnerCrown.y = -crowningOffset * 30;
@@ -462,7 +456,11 @@ function Game(_mapLoader, _botFactory) {
           ringFlash(f, 0.55);
           ringFlash(f, 0.6);
           ringFlash(f, 0.65);
-          winnerCrown.scale.setTo(0.13, 0.13);
+
+          // We are not using a crown in 
+          // this version, so we can hide.
+          winnerCrown.visible = false;
+          // winnerCrown.scale.setTo(0.13, 0.13);
         }
 
         // Crowning complete, hide beams
@@ -545,6 +543,7 @@ function Game(_mapLoader, _botFactory) {
     for (let i = 0; i < flyers.length; i += 1) {
       if (flyerGold === flyers[i]) {
         flyers[i].crowned = true;
+
         winnerCrown.visible = true;
         flyers[i].phaserBody.sprite.addChild(winnerCrown);
 
@@ -570,6 +569,9 @@ function Game(_mapLoader, _botFactory) {
         // Swap in default hammer img
         flyers[i].crowned = false;
         $(flyers[i].fistDiv).attr('src', 'img/hero_fist.png');
+
+        const userColor = parseInt(flyers[i].color.replace(/^#/, ''), 16);
+        crownLightBeams[0].tint = userColor;
       }
     }
   }
@@ -578,7 +580,7 @@ function Game(_mapLoader, _botFactory) {
     // Detect if any bricks were hit
 
     // Default to swing from upper left of flyer
-    const swipeRadius = 50; // 50;
+    const swipeRadius = 50;
     const swipeCircle = {
       x: f.phaserBody.x,
       y: f.phaserBody.y + (f.phaserBody.height * 0.125),
@@ -676,20 +678,25 @@ function Game(_mapLoader, _botFactory) {
 
       // Release shattered bricks
       if (wasGold) {
-        particleBrickBurst(goldEmitter, brick.x, brick.y, flyer.dir);
+        particleBrickBurst(goldEmitter, brick.x, brick.y, flyer.dir, true);
       } else {
-        particleBrickBurst(brickEmitter, brick.x, brick.y, flyer.dir);
+        particleBrickBurst(brickEmitter, brick.x, brick.y, flyer.dir, false);
       }
     }
   }
 
-  function particleBrickBurst(emitter, x, y, dir) {
+  function particleBrickBurst(emitter, x, y, dir, explosive) {
     // Position the emitter where event occurred
     emitter.x = x;
     emitter.y = y;
 
     // Randomize initial particle x velocities
     emitter.setXSpeed(20 * dir, 400 * dir);
+
+    if (explosive) {
+      emitter.setXSpeed(500 * dir, 1000 * dir);
+      emitter.setYSpeed(-700, 500);
+    }
 
     // Release all particles at once
     emitter.explode(5555, Math.round(Math.random() * 2 + 3));
@@ -1054,7 +1061,7 @@ function Game(_mapLoader, _botFactory) {
     // be a socket that was opened before
     // the game was opened.
     if (f === undefined || f === null) {
-      console.log(`[Warning] Control tap sent to non-existent flyer. Id: ${data.userid}`);
+      console.error(`[Warning] Control tap sent to non-existent flyer. Id: ${data.userid}`);
       // Let's holla back at this controller
       // and force them to reconnect...
       if (onForceDisconnectCallback && isHuman(data)) {
@@ -1278,11 +1285,11 @@ function Game(_mapLoader, _botFactory) {
         // Include crown icon for first place
         if (CROWNS_ENABLED === true) {
           if (i === 0) {
-            htmlString += ' &nbsp;  <img width="40px" src="img/hero_fist_gold.png"/>';
+            htmlString += '&nbsp;<img width="40px" src="img/hero_fist_gold.png"/>';
           } else if (i === 1) {
-            htmlString += ' &nbsp;  <img width="40px" src="img/hero_fist_silver.png"/>';
+            htmlString += '&nbsp;<img width="40px" src="img/hero_fist_silver.png"/>';
           } else if (i === 2) {
-            htmlString += ' &nbsp;  <img width="40px" src="img/hero_fist_bronze.png"/>';
+            htmlString += '&nbsp;<img width="40px" src="img/hero_fist_bronze.png"/>';
           }
         }
         $('#player-list').append($('<li>').html(htmlString));

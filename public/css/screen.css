@@ -15,9 +15,10 @@
 
 body {
     color:#efefef;
-    font: 13px Helvetica, Arial;
+    font: 13px 'Detroit05Base';
     background: #000;
     overflow: hidden;
+    text-transform: uppercase;
 }
 
 #stage {
@@ -103,6 +104,7 @@ body {
     position: absolute;
     top: 0px;
     left: 0px;
+    opacity: 0.0;
 }
 
 #svg-container svg {
@@ -116,5 +118,5 @@ body {
     position: absolute;
     top: 0;
     left: 0;
-    opacity: 0.0;
+    opacity: 1.0;
 }

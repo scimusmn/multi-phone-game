@@ -17,12 +17,13 @@ function MapLoader() {
     // 'TRex',
     // 'Vase',
     // 'Wings',
-    // '19201080test',
     // 'CliffsNRamps',
     // 'Pillars',
     // 'HangingVines',
-    'BasicWide',
-    // 'SnakeCharmer',
+    'HappyFace',
+    'Pedestals',
+    'Triangles',
+    'Mushrooms',
   ];
 
   const maps = [];
