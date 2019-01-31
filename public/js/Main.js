@@ -10,7 +10,7 @@ $(document).ready(() => {
   const game = new Game(mapLoader);
 
   const botFactory = new BotFactory(game);
-  botFactory.setMaxBots(6);
+  botFactory.setMaxBots(4);
 
   // Let socket.io know this is the shared screen client
   socket.emit('register', { usertype: 'client_shared_screen' });
