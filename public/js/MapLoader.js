@@ -22,7 +22,7 @@ function MapLoader() {
     // 'HangingVines',
     'HappyFace',
     'Pedestals',
-    'Triangles',
+    // 'Triangles',
     'Mushrooms',
   ];
 

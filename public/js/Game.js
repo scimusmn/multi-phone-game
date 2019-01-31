@@ -13,10 +13,10 @@ function Game(_mapLoader, _botFactory) {
    */
   // Add keyboard controllable character
   // Show in-game visual feedback
-  const DEBUG_MODE = false;
+  const DEBUG_MODE = true;
 
   // Duration of gameplay rounds in seconds
-  const ROUND_DURATION = 70;
+  const ROUND_DURATION = 75;
 
   // Duration between rounds in seconds
   const LOBBY_DURATION = 30; // /25;
@@ -87,6 +87,7 @@ function Game(_mapLoader, _botFactory) {
   let crowningOffset;
   const crownLightBeams = [];
   let brickEmitter;
+  let paneEmitter;
   let goldEmitter;
   let numBricksSmashed = 0;
   const brickMilestones = { whiteBricks: 0, logoBricks: 0, goldBricks: 0 };
@@ -101,9 +102,12 @@ function Game(_mapLoader, _botFactory) {
     game.load.image('block-damaged', 'img/sprites/block-damaged.png');
     game.load.image('block-damaged-2', 'img/sprites/block-damaged-2.png');
     game.load.image('block-piece', 'img/sprites/block-piece.png');
+    game.load.image('block-piece-pane', 'img/sprites/block-piece-pane.png');
     game.load.image('block-piece-gold', 'img/sprites/block-piece-gold.png');
     game.load.image('logo-block', 'img/sprites/logo-block.png');
     game.load.image('crown', 'img/hero_fist_gold.png');
+
+    game.load.image('background', 'img/background-gc-blue.png');
 
     // Load LED spritesheet and config
     game.load.atlasJSONHash('led', 'img/sprites/led.png', 'img/sprites/led.json');
@@ -197,18 +201,13 @@ function Game(_mapLoader, _botFactory) {
       setupCrownDisplays();
     }
 
+    // Add temp background (game changers request)
+    // game.add.sprite(0, 0, 'background');
+
     // Prepare particle effects
     brickEmitter = setupBrickEmitter('block-piece');
+    paneEmitter = setupBrickEmitter('block-piece-pane');
     goldEmitter = setupBrickEmitter('block-piece-gold');
-
-    /* brickEmitter = game.add.emitter(0, 0, 100);
-    brickEmitter.physicsBodyType = Phaser.Physics.NINJA;
-    brickEmitter.enableBody = true;
-    brickEmitter.makeParticles('block-piece', 0, 100, true, true);
-    brickEmitter.gravity = 620;
-    brickEmitter.bounce.setTo(0.4, 0.6);
-    brickEmitter.setScale(0.25, 0.45, 0.25, 0.45);
-    brickEmitter.setAlpha(0.45, 0.85); */
 
     // Game objects
     allFlyersGroup = game.add.group();
@@ -390,7 +389,7 @@ function Game(_mapLoader, _botFactory) {
     // Default
     winnerCrown.y = 0;
 
-   /* if (f.ax < 0) {
+    /* if (f.ax < 0) {
       winnerCrown.angle = -40;
       winnerCrown.anchor.x = 0.9;
       winnerCrown.anchor.y = 2.6;
@@ -457,7 +456,7 @@ function Game(_mapLoader, _botFactory) {
           ringFlash(f, 0.6);
           ringFlash(f, 0.65);
 
-          // We are not using a crown in 
+          // We are not using a crown in
           // this version, so we can hide.
           winnerCrown.visible = false;
           // winnerCrown.scale.setTo(0.13, 0.13);
@@ -580,7 +579,12 @@ function Game(_mapLoader, _botFactory) {
     // Detect if any bricks were hit
 
     // Default to swing from upper left of flyer
-    const swipeRadius = 50;
+    let swipeRadius = 50;
+    if (f.isCrowned) swipeRadius = 70;
+    // TEMP - DEBUG
+    if (numBricksSmashed < brickMilestones.whiteBricks && f.nickname == 'Debug') {
+      swipeRadius = 350;
+    }
     const swipeCircle = {
       x: f.phaserBody.x,
       y: f.phaserBody.y + (f.phaserBody.height * 0.125),
@@ -620,6 +624,7 @@ function Game(_mapLoader, _botFactory) {
     } else if (brick.key.endsWith('damaged')) {
       brick.loadTexture('block-damaged-2');
     } else {
+      let wasPane = false;
       let wasGold = false;
 
       // Did not come from map, and has no img
@@ -633,21 +638,22 @@ function Game(_mapLoader, _botFactory) {
         // All white bricks have been smashed
         if (brick.brickInfo.type === 'pane') {
           if (brick.brickInfo.health > 0.75) {
-            brick.brickInfo.health -= 0.125;
+            brick.brickInfo.health -= 0.12;
             TweenLite.set($(brick.brickInfo.ref), {
-              css: { opacity: brick.brickInfo.health, rotation: `+=${Math.random() * 18 - 9}` },
+              css: { opacity: brick.brickInfo.health, rotation: `+=${Math.random() * 30 - 15}` },
             });
             return;
           }
           $(brick.brickInfo.ref).hide();
+          wasPane = true;
         } else if (brick.brickInfo.type === 'gold') {
           if (numBricksSmashed < brickMilestones.logoBricks) {
             return;
           }
           if (brick.brickInfo.health > 0.75) {
-            brick.brickInfo.health -= 0.125;
+            brick.brickInfo.health -= 0.12;
             TweenLite.set($(brick.brickInfo.ref), {
-              css: { opacity: brick.brickInfo.health, rotation: `+=${Math.random() * 20 - 10}` },
+              css: { opacity: brick.brickInfo.health, rotation: `+=${Math.random() * 40 - 20}` },
             });
             return;
           }
@@ -677,26 +683,26 @@ function Game(_mapLoader, _botFactory) {
       }
 
       // Release shattered bricks
-      if (wasGold) {
-        particleBrickBurst(goldEmitter, brick.x, brick.y, flyer.dir, true);
+      if (wasPane) {
+        paneEmitter.setXSpeed(150 * flyer.dir, 600 * flyer.dir);
+        paneEmitter.setYSpeed(-600, 400);
+        particleBrickBurst(paneEmitter, brick.x, brick.y);
+      } else if (wasGold) {
+        goldEmitter.setXSpeed(300 * flyer.dir, 800 * flyer.dir);
+        goldEmitter.setYSpeed(-1000, 400);
+        particleBrickBurst(goldEmitter, brick.x, brick.y);
       } else {
-        particleBrickBurst(brickEmitter, brick.x, brick.y, flyer.dir, false);
+        // Randomize initial particle velocities
+        brickEmitter.setXSpeed(20 * flyer.dir, 400 * flyer.dir);
+        particleBrickBurst(brickEmitter, brick.x, brick.y);
       }
     }
   }
 
-  function particleBrickBurst(emitter, x, y, dir, explosive) {
+  function particleBrickBurst(emitter, x, y) {
     // Position the emitter where event occurred
     emitter.x = x;
     emitter.y = y;
-
-    // Randomize initial particle x velocities
-    emitter.setXSpeed(20 * dir, 400 * dir);
-
-    if (explosive) {
-      emitter.setXSpeed(500 * dir, 1000 * dir);
-      emitter.setYSpeed(-700, 500);
-    }
 
     // Release all particles at once
     emitter.explode(5555, Math.round(Math.random() * 2 + 3));

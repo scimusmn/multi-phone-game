@@ -104,13 +104,12 @@ body {
     position: absolute;
     top: 0px;
     left: 0px;
-    opacity: 0.0;
 }
 
 #svg-container svg {
     position: absolute;
-    top: 300px;
-    left: 600px;
+    top: 209px;
+    left: 583px;
     width: 1000px;
 }
 
@@ -118,5 +117,4 @@ body {
     position: absolute;
     top: 0;
     left: 0;
-    opacity: 1.0;
 }
