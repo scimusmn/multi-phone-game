@@ -48,7 +48,7 @@ $(document).ready(() => {
   setInterval(() => {
     pongCounter += 1;
 
-    if (pongCounter >= 5) {
+    if (pongCounter >= 10) {
       console.warn('[Warning] Ping pong timeout. Connection broken. Reloading.');
       window.location.reload(true);
     }
