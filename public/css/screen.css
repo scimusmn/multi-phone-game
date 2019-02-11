@@ -113,6 +113,14 @@ body {
     width: 1000px;
 }
 
+#gc_logo_png {
+    position: absolute;
+    top: -4px;
+    left: 0px;
+    transform: scale(0.95);
+    opacity: 0.7;
+}
+
 #background {
     position: absolute;
     top: 0;

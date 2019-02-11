@@ -13,7 +13,7 @@ function Game(_mapLoader, _botFactory) {
    */
   // Add keyboard controllable character
   // Show in-game visual feedback
-  const DEBUG_MODE = false;
+  const DEBUG_MODE = true;
 
   // Duration of gameplay rounds in seconds
   const ROUND_DURATION = 75;
@@ -202,7 +202,9 @@ function Game(_mapLoader, _botFactory) {
     }
 
     // Add temp background (game changers request)
-    // game.add.sprite(0, 0, 'background');
+    const bgSprite = game.add.sprite(0, 0, 'background');
+    const bgParent = bgSprite.parent;
+    bgParent.sendToBack(bgSprite);
 
     // Prepare particle effects
     brickEmitter = setupBrickEmitter('block-piece');
@@ -580,7 +582,15 @@ function Game(_mapLoader, _botFactory) {
 
     // Default to swing from upper left of flyer
     let swipeRadius = 50;
-    if (f.isCrowned) swipeRadius = 70;
+
+    // Make swipe radius larger when
+    // fewer people are playing....
+    if (flyers.length < 7) swipeRadius = 75;
+
+    // Player with golden hammer gets
+    // a larger swip radius
+    if (f.isCrowned) swipeRadius *= 1.4;
+
     // TEMP - DEBUG
     if (numBricksSmashed < brickMilestones.whiteBricks && f.nickname == 'Debug') {
       swipeRadius = 350;
@@ -635,6 +645,15 @@ function Game(_mapLoader, _botFactory) {
         if (numBricksSmashed < brickMilestones.whiteBricks) {
           return;
         }
+
+        // Show breakable svg logo
+        if ($('#gc_logo_png').is(':visible') === true) {
+          $('#gc_logo_png').hide();
+          TweenLite.set($('#svg-container'), {
+            css: { opacity: 1.0 },
+          });
+        }
+
         // All white bricks have been smashed
         if (brick.brickInfo.type === 'pane') {
           if (brick.brickInfo.health > 0.75) {
@@ -1249,6 +1268,13 @@ function Game(_mapLoader, _botFactory) {
     // Show new-round screen
     $('#new-round').show();
     $('#join-msg').hide();
+
+    // Show intact logo
+    $('#gc_logo_png').show();
+    TweenLite.set($('#svg-container'), {
+      css: { opacity: 0.0 },
+    });
+
     roundCountdown = -LOBBY_DURATION;
     clearAsteroids();
     clearAllBricks();
