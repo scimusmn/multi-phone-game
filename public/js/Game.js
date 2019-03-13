@@ -202,9 +202,9 @@ function Game(_mapLoader, _botFactory) {
     }
 
     // Add temp background (game changers request)
-    const bgSprite = game.add.sprite(0, 0, 'background');
+   /* const bgSprite = game.add.sprite(0, 0, 'background');
     const bgParent = bgSprite.parent;
-    bgParent.sendToBack(bgSprite);
+    bgParent.sendToBack(bgSprite);*/
 
     // Prepare particle effects
     brickEmitter = setupBrickEmitter('block-piece');
