@@ -16,7 +16,7 @@ function Game(_mapLoader, _botFactory) {
   const DEBUG_MODE = false;
 
   // Duration of gameplay rounds in seconds
-  const ROUND_DURATION = 75;
+  const ROUND_DURATION = 90;
 
   // Duration between rounds in seconds
   const LOBBY_DURATION = 30; // /25;
