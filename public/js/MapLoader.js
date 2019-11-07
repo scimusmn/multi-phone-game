@@ -61,11 +61,12 @@ function MapLoader() {
     const offsetLeft = parseInt($(svgRef).children('svg').css('left'), 10);
     const offsetTop = parseInt($(svgRef).children('svg').css('top'), 10);
 
-    const panesGroup = $(svgRef).children().children('#panes');
+    const panesGroup = $(svgRef).children().children('#panes').children().children();
     const goldsGroup = $(svgRef).children().children('#golds');
     const staticsGroup = $(svgRef).children().children('#statics');
 
-    $(panesGroup).children().each(function () {
+    console.log(panesGroup);
+    $(panesGroup).children('path').each(function () {
       const boundsBox = $(this)[0].getBBox();
       const shapeObj = {
         ref: $(this),
@@ -79,6 +80,7 @@ function MapLoader() {
     });
 
     $(goldsGroup).children().each(function () {
+      console.log('gold found');
       const boundsBox = $(this)[0].getBBox();
       const shapeObj = {
         ref: $(this),

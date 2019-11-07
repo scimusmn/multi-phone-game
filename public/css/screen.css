@@ -108,16 +108,16 @@ body {
 
 #svg-container svg {
     position: absolute;
-    top: 209px;
-    left: 583px;
-    width: 1000px;
+    top: 489px;
+    left: 490px;
+    width: 1326px;
 }
 
 #gc_logo_png {
     position: absolute;
-    top: -4px;
+    top: 0px;
     left: 0px;
-    transform: scale(0.95);
+    transform: scale(1.0);
 }
 
 #background {

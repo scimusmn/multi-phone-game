@@ -13,10 +13,10 @@ function Game(_mapLoader, _botFactory) {
    */
   // Add keyboard controllable character
   // Show in-game visual feedback
-  const DEBUG_MODE = false;
+  const DEBUG_MODE = true;
 
   // Duration of gameplay rounds in seconds
-  const ROUND_DURATION = 90;
+  const ROUND_DURATION = 99;
 
   // Duration between rounds in seconds
   const LOBBY_DURATION = 30; // /25;
@@ -200,11 +200,6 @@ function Game(_mapLoader, _botFactory) {
     if (CROWNS_ENABLED === true) {
       setupCrownDisplays();
     }
-
-    // Add temp background (game changers request)
-   /* const bgSprite = game.add.sprite(0, 0, 'background');
-    const bgParent = bgSprite.parent;
-    bgParent.sendToBack(bgSprite);*/
 
     // Prepare particle effects
     brickEmitter = setupBrickEmitter('block-piece');
@@ -592,9 +587,11 @@ function Game(_mapLoader, _botFactory) {
     if (f.isCrowned) swipeRadius *= 1.4;
 
     // TEMP - DEBUG
-    if (numBricksSmashed < brickMilestones.whiteBricks && f.nickname == 'Debug') {
-      swipeRadius = 350;
+    if (numBricksSmashed < brickMilestones.whiteBricks && f.nickname === 'Debug') {
+      console.log(numBricksSmashed, '/', brickMilestones.whiteBricks);
+      swipeRadius *= 5;
     }
+
     const swipeCircle = {
       x: f.phaserBody.x,
       y: f.phaserBody.y + (f.phaserBody.height * 0.125),
@@ -641,8 +638,8 @@ function Game(_mapLoader, _botFactory) {
       // which means it's part of svg logo
       if (brick.key === '__default') {
         // Do not allow smashing of logo panes until
-        // all bricks are gone
-        if (numBricksSmashed < brickMilestones.whiteBricks) {
+        // all or nearly all bricks are gone
+        if (numBricksSmashed < (brickMilestones.whiteBricks - 15)) {
           return;
         }
 
@@ -1272,7 +1269,7 @@ function Game(_mapLoader, _botFactory) {
     // Show intact logo
     $('#gc_logo_png').show();
     TweenLite.set($('#svg-container'), {
-      css: { opacity: 0.0 },
+      css: { opacity: 0.5 },
     });
 
     roundCountdown = -LOBBY_DURATION;
