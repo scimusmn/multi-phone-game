@@ -13,7 +13,7 @@ function Game(_mapLoader, _botFactory) {
    */
   // Add keyboard controllable character
   // Show in-game visual feedback
-  const DEBUG_MODE = true;
+  const DEBUG_MODE = false;
 
   // Duration of gameplay rounds in seconds
   const ROUND_DURATION = 99;

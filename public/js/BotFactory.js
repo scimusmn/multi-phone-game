@@ -21,6 +21,8 @@ function BotFactory(_game) {
     'Berra',
     'Caly',
     'Troll',
+    'Theodore',
+    'Bear',
     'Mountain',
     'Gail',
     'Gail',
