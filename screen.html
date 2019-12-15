@@ -4,6 +4,29 @@
     <title>Big Screen</title>
   </head>
 
+  <!-- Catch early loading errors -->
+  <!-- (This fixes a rare but recurring issue) -->
+  <script type="text/javascript">
+    var initialLoadIsCleared = false;
+    var loadingErrorFunc = function(e) {
+      console.log('==== Loading error ====');
+      console.log(e);
+      window.removeEventListener('error', loadingErrorFunc);
+      if (initialLoadIsCleared === false) {
+        setTimeout(function () {
+          // Refresh Browser after 10 seconds
+          location.reload(true);
+        }, 10000);
+      }
+    }
+    window.addEventListener('error', loadingErrorFunc, true);
+    setTimeout(function () {
+      console.log('Removing load-error listener.');
+      window.removeEventListener('error', loadingErrorFunc);
+      initialLoadIsCleared = true;
+    }, 3500);
+  </script>
+
   <!-- CSS -->
   <link rel="stylesheet" type="text/css" href="/css/screen.css">
   <link rel="stylesheet" type="text/css" href="/css/game.css">
